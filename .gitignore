@@ -1,0 +1,13 @@
+# pre-hackathon planning for earlier ideas (kept local)
+/research/
+/DivHacks ideas.pdf
+/DivHacks-2026-Project-Plan.*
+/divhacks-2026-nyc-data-ideas-for-claude.pdf
+
+.DS_Store
+node_modules/
+.env*
+!.env.example
+__pycache__/
+.vercel/
+dist/
