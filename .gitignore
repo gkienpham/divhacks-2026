@@ -12,5 +12,5 @@ __pycache__/
 .vercel/
 dist/
 
-# raw API test responses (scratch)
-/data/zillow-test.json
+# raw API responses (Zillow data stays out of the public repo)
+/data/

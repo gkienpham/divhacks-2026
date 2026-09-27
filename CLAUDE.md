@@ -11,7 +11,10 @@ DivHacks 2026 (Columbia, Sep 26–27): roommate matching and renter support for 
 - **Listings:** SearchApi Zillow engine.
   - Pull offline, store in Tiger Data, and never call it live in the demo.
   - URL-encode params (`--data-urlencode`).
-  - 41 results per page; 100 free requests, about 1 used.
+  - 41 results per page; 100 free requests, **45 used** (55 left; save ~15 for a Sunday price re-pull).
+  - **NYC only:** `parse()` drops any listing without a NYC zip. Near-NYC areas (`--near-nyc`) are a fallback we haven't needed.
+  - Script: `uv run ingest/pull_listings.py` (see its docstring). Raw responses are cached in `data/raw/` (gitignored), so reloading costs 0 requests.
+  - Schema: `db/schema.sql`, which is safe to re-run.
 - **Voice:** ElevenLabs agent for the open-ended interview.
   - About 2 hours of agent time on the Creator plan.
   - Cap calls at about 90 s.

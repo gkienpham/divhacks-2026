@@ -94,6 +94,10 @@ The pitch: a bad roommate is a *daily* tax on sleep, cleanliness and noise. We p
   - Results come in two shapes:
     - single apartments with `extracted_price`, beds, baths, sqft, `availability_date` and `broker`
     - buildings with a `units[]` rent range; expand these or drop them
+  - **Pulled (Sep 26):** 1,380 NYC listings across 24 neighborhoods (Manhattan, Brooklyn, Queens, Bronx, Staten Island) using 45 requests. 279 of them are building units with a "from $X" price.
+    - NYC only: listings without a NYC zip are dropped.
+    - Near-NYC areas (Jersey City, Hoboken, Union City, Yonkers) sit behind `--near-nyc` and weren't needed.
+    - Code: `ingest/pull_listings.py`; schema: `db/schema.sql`.
   - **Budget: 100 free requests.**
     - One full pull is about 20 neighborhoods × up to 4 pages ≈ 80 requests ≈ 3,000 listings.
     - After that, re-pull about 5 neighborhoods × 1 page every 6 hours for price history (≈ 20 requests).
