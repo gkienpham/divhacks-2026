@@ -2,7 +2,7 @@
 //   npx tsx --env-file=.env.local --conditions=react-server lib/listings.check.ts
 // (react-server makes `server-only` resolve to its empty build.)
 import assert from 'node:assert/strict';
-import { pool } from './db';
+import { getPool } from './db';
 import { getListing, getListingStats, getNeighborhoods, getPriceHistory, listListings } from './listings';
 
 const ZS = 'https://photos.zillowstatic.com/';
@@ -71,4 +71,4 @@ async function main() {
   assert.ok(areas.every((a) => a.cover && a.cover.images.every((u) => u.startsWith(ZS))));
 }
 
-main().then(() => console.log('OK'), (e) => { console.error(e); process.exitCode = 1; }).finally(() => pool.end());
+main().then(() => console.log('OK'), (e) => { console.error(e); process.exitCode = 1; }).finally(() => getPool().end());

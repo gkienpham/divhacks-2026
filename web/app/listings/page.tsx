@@ -13,7 +13,8 @@ export default async function ListingsPage({ searchParams }: PageProps<"/listing
   const one = (k: string) => (Array.isArray(sp[k]) ? sp[k]![0] : sp[k]) || undefined;
   const page = Math.max(1, Math.min(MAX_PAGES, Number(one("page")) || 1));
   const budget = one("budget");
-  const [min, max] = (budget && BUDGETS[budget]) || [];
+  const knownBudget = !!budget && Object.hasOwn(BUDGETS, budget);
+  const [min, max] = (knownBudget && BUDGETS[budget!]) || [];
   const beds = one("beds");
   const filters: ListingFilters = {
     neighborhood: one("area"),
@@ -27,7 +28,7 @@ export default async function ListingsPage({ searchParams }: PageProps<"/listing
     <BrowseScreen
       listings={listings} total={total} stats={stats} page={page} more={page < MAX_PAGES && listings.length < total}
       areas={areas.map((a) => a.neighborhood)} budgets={Object.keys(BUDGETS)}
-      current={{ area: filters.neighborhood ?? null, beds: filters.beds ?? null, budget: budget && BUDGETS[budget] ? budget : null, fair: !!filters.fairOnly }}
+      current={{ area: filters.neighborhood ?? null, beds: filters.beds ?? null, budget: knownBudget ? budget : null, fair: !!filters.fairOnly }}
     />
   );
 }

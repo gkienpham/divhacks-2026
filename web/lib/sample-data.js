@@ -15,4 +15,8 @@ export const TAGS = [['Early riser', 'Cooks daily', 'Quiet weekdays'], ['Night o
 export const SCORES = [87, 86, 85, 85, 84, 82, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67];
 export const REASONS = ['Same bedtime window, both clean 2×/week', 'Same guest range, both never smoke', 'Wake times within 30 min', 'Both clean 2×/week, same noise level', 'Same bedtime window, same guest range'];
 // The demo pair used by /matches/[id], /agreement/[matchId] and /locked/[matchId].
-export const personById = id => QUEUE.find(p => p.id === id) || QUEUE[0];
+// QUEUE people have full cards; the other grid people (id = lowercase name) get the basics the pair screens read.
+export const personById = id => {
+  const k = PEOPLE.findIndex(([, n]) => n.toLowerCase() === id);
+  return QUEUE.find(p => p.id === id) || (k >= 0 ? { id, i: PEOPLE[k][0], n: PEOPLE[k][1], s: SCORES[k] } : QUEUE[0]);
+};

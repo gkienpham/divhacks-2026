@@ -135,7 +135,7 @@ export default function DetailScreen({ l, history }) {
         <div style={{ position: 'sticky', top: 104, pointerEvents: 'auto', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 24, padding: 28 }}>
           <div style={{ fontSize: 26, fontWeight: 500, letterSpacing: '-0.015em', color: 'var(--ink)', fontVariantNumeric: 'tabular-nums' }}>{from}{usd(l.perRoom)} per room</div>
           <div style={{ marginTop: 6, fontSize: 14, color: 'var(--muted-foreground)', fontVariantNumeric: 'tabular-nums' }}>{bedsLabel(l.beds)} · {l.neighborhood}{l.availabilityDate ? ` · Available ${day(l.availabilityDate)}` : ''}</div>
-          <LD.ButtonInk size="lg" fullWidth style={{ marginTop: 24 }} onClick={() => { if (!saved.includes(l.zpid)) toggleSave(l.zpid); router.push('/matches'); }}>Save and find roommates for this place</LD.ButtonInk>
+          <LD.ButtonInk size="lg" fullWidth style={{ marginTop: 24 }} onClick={() => { if (!saved.includes(l.zpid)) toggleSave(l.zpid); router.push('/matches?listing=' + encodeURIComponent(l.zpid)); }}>Save and find roommates for this place</LD.ButtonInk>
           <div style={{ marginTop: 16, display: 'flex', justifyContent: 'center' }}><LD.LinkUnderline href={l.link} arrow={false} size={14}>View on Zillow ↗</LD.LinkUnderline></div>
           <p style={{ margin: '16px 0 0', fontSize: 13, lineHeight: 1.6, color: 'var(--muted-foreground)' }}>We don’t rent this unit. When you’re ready, you’ll apply through the source listing.</p>
         </div>

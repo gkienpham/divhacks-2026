@@ -41,7 +41,7 @@ export default function BrowseScreen({ listings, total, stats, page, more, areas
           {[`${stats.listings.toLocaleString('en-US')} listings`, `${stats.neighborhoods} neighborhoods`, `Seen on ${seenOn(stats.lastSeen)}`].map((s, i) => <div key={s} style={{ paddingLeft: i ? 32 : 0, borderLeft: i ? '1px solid var(--border)' : 0, fontSize: 26, fontWeight: 500, letterSpacing: '-0.015em', color: 'var(--ink)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>{s}</div>)}
         </div>
       </div>
-      <LB.FilterBar style={{ marginTop: 48 }} actionLabel="Search"
+      <LB.FilterBar key={JSON.stringify(current)} style={{ marginTop: 48 }} actionLabel="Search"
         onAction={([area, budget, beds]) => go({ area: area === ANY_AREA ? null : area, budget: budget === ANY_BUDGET ? null : budget, beds: beds === ANY_BEDS ? null : beds.split(' ')[0] })}
         segments={[
           { label: 'Neighborhood', value: current.area || ANY_AREA, options: [ANY_AREA, ...areas] },
@@ -58,7 +58,7 @@ export default function BrowseScreen({ listings, total, stats, page, more, areas
       </div>
       <div style={{ marginTop: 32, display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', columnGap: 16, rowGap: 48 }}>
         {shown.length ? shown.map(l => <ListingCard key={l.zpid} l={l} currency={currency} saved={saved.includes(l.zpid)} onSave={toggleSave} />)
-          : showSaved ? <EmptyState icon="plus" title="No saved listings yet" text="Tap + on any listing to save it. Saved places show up on your matches, so you can see who saved the same one." action={<LB.ButtonInk size="lg" onClick={() => setShowSaved(false)}>Browse listings</LB.ButtonInk>} />
+          : showSaved ? <EmptyState icon="plus" title={saved.length ? 'Your saved listings aren’t in these results' : 'No saved listings yet'} text={saved.length ? 'Clear the filters or load more to find them.' : 'Tap + on any listing to save it. Saved places show up on your matches, so you can see who saved the same one.'} action={<LB.ButtonInk size="lg" onClick={() => setShowSaved(false)}>Browse listings</LB.ButtonInk>} />
           : <EmptyState icon="search" title="Nothing matches those filters" text="Try another neighborhood or a wider budget." action={<LB.ButtonInk size="lg" onClick={() => router.push('/listings')}>Clear filters</LB.ButtonInk>} />}
       </div>
       {!showSaved && more && <div style={{ marginTop: 56, display: 'flex', justifyContent: 'center' }}><LB.ButtonOutline size="lg" onClick={() => { const q = new URLSearchParams(sp.toString()); q.set('page', String(page + 1)); router.push('/listings?' + q, { scroll: false }); }}>Load more</LB.ButtonOutline></div>}

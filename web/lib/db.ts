@@ -20,10 +20,15 @@ function makePool() {
   });
 }
 
-export const pool: Pool = g.__roommePool ?? makePool();
-if (process.env.NODE_ENV !== 'production') g.__roommePool = pool;
+// Created on first query, so a build without DATABASE_URL doesn't fail at import time.
+let pool: Pool | undefined;
+export function getPool(): Pool {
+  pool ??= g.__roommePool ?? makePool();
+  if (process.env.NODE_ENV !== 'production') g.__roommePool = pool;
+  return pool;
+}
 
 export async function query<T>(text: string, params: unknown[] = []): Promise<T[]> {
-  const { rows } = await pool.query(text, params);
+  const { rows } = await getPool().query(text, params);
   return rows as T[];
 }

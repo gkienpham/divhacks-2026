@@ -55,8 +55,8 @@ rows as (
          to_json(l.first_seen) #>> '{}' as "firstSeen",
          to_json(l.last_seen) #>> '{}' as "lastSeen",
          l.link, l.broker, l.home_type as "homeType",
-         round(m.median_rent)::int as "medianRent",
-         round(m.median_rent / greatest(l.beds, 1))::int as "medianPerRoom",
+         case when m.n >= 3 then round(m.median_rent)::int end as "medianRent",
+         case when m.n >= 3 then round(m.median_rent / greatest(l.beds, 1))::int end as "medianPerRoom",
          m.n::int as "medianN",
          case when m.median_rent is null or m.n < 3 then null
               when l.price <= 0.6 * m.median_rent then 'check'
