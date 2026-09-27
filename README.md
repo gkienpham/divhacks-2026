@@ -1,4 +1,6 @@
-# divhacks-2026: Buzz In (working name)
+# Roomme
+
+**[roomme.tech](https://roomme.tech)**
 
 Roommate matching + renter support for NYC. DivHacks 2026, **Live Better** track.
 

@@ -1,4 +1,4 @@
--- Buzz In schema (Tiger Data: Postgres + TimescaleDB). Idempotent: safe to re-run.
+-- Roomme schema (Tiger Data: Postgres + TimescaleDB). Idempotent: safe to re-run.
 -- Apply: tiger db query bj9teo40nn -f db/schema.sql
 
 -- Listings: latest known state of each Zillow rental (from SearchApi).

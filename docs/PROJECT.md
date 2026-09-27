@@ -1,6 +1,6 @@
 # Project description and plan
 
-**Working name:** Buzz In (see §4). **Track:** Live Better. **Also entering:** Photon (iMessage via Spectrum), MLH Gemini, MLH Tiger Data, MLH ElevenLabs, MLH .Tech domain.
+**Name:** Roomme, at [roomme.tech](https://roomme.tech) (see §4). **Track:** Live Better. **Also entering:** Photon (iMessage via Spectrum), MLH Gemini, MLH Tiger Data, MLH ElevenLabs, MLH .Tech domain.
 
 **Pitch:** A bad roommate is a daily tax on your sleep, your kitchen and your peace. We match NYC newcomers on how they actually live, catch mismatches before anyone signs a lease, and then the same iMessage agent that matched you moves into your group chat to help keep the peace.
 
@@ -47,17 +47,10 @@ The pitch: a bad roommate is a *daily* tax on sleep, cleanliness and noise. We p
 - **Pressure:** NYC's vacancy rate is 1.41%, the lowest since 1968 ([HPD](https://www.nyc.gov/site/hpd/news/007-24/new-york-city-s-vacancy-rate-reaches-historic-low-1-4-percent-demanding-urgent-action-new)), so decisions get rushed.
 - **Evidence to collect at the event:** a 2-minute poll of 20–30 hackers ("Have you had a roommate conflict? About what? Where did you find them?"). Put the results on a slide. That's first-hand data about this exact user group.
 
-### 4. Names (ranked)
-1. **Buzz In**: the NYC buzzer. "Decide who you buzz in."
-2. **Thin Walls**: funny and very NYC. "You'll hear everything, so choose well."
-3. **Stoop**: where New Yorkers meet neighbors.
-4. **Second Key**
-5. **Splitflat**
-6. **Keymate**
-7. **Walkup**
-8. **Halfsies**
-9. **Nestmate**
-10. **Roomtone**
+### 4. Name
+**Roomme**: "room me," with a nod to "roomie." The site is [roomme.tech](https://roomme.tech), which is also the MLH .Tech domain entry.
+- **Write it as "Roomme" everywhere.** The double m is easy to misread, so keep the spelling consistent across the logo, the deck and Devpost.
+- **Expect a comparison with Roomi**, an existing roommate app with a similar name. Our answer is what Roomi doesn't do: habit-based matching and the iMessage agent that keeps the peace after move-in.
 
 ### 5. Product flow v2
 1. **Pre-screen (30 s):** budget, move-in month, lease length, neighborhoods or commute anchor, dealbreakers (smoking, pets or allergies).
@@ -197,7 +190,7 @@ The pitch: a bad roommate is a *daily* tax on sleep, cleanliness and noise. We p
 | MLH Gemini | Match cards |
 | MLH Tiger Data | Fair-price badge and house-health chart |
 | MLH ElevenLabs | The onboarding interview |
-| MLH .Tech domain | The app's domain |
+| MLH .Tech domain | roomme.tech |
 
 ### 11. Check before the pitch
 These are unverified. Don't state them on stage until someone confirms them:

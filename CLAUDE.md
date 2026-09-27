@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-DivHacks 2026 (Columbia, Sep 26–27): roommate matching and renter support for NYC, **Live Better** track. The working name is Buzz In. The source of truth is `docs/PROJECT.md`; read it before planning or building.
+DivHacks 2026 (Columbia, Sep 26–27): roommate matching and renter support for NYC, **Live Better** track. The project is **Roomme** ([roomme.tech](https://roomme.tech)). The source of truth is `docs/PROJECT.md`; read it before planning or building.
 
 ## Stack
 - **Web:** Next.js (TypeScript) on Vercel.
