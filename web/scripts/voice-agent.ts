@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 import { VOICE_PROMPTS } from '../lib/questions';
 
 const SECS = 90; // same cap as SECS in app/profile/VoiceScreens.jsx
+const LLM = 'gemini-3.8-flash'; // the model lib/ai.ts defaults to; ids: GET /v1/convai/llm/list
 const { ELEVENLABS_API_KEY: key, ELEVENLABS_AGENT_ID: id } = process.env;
 
 const prompt = `You run RoomMe's voice interview for a roommate-matching app in New York City. It lasts about ${SECS} seconds, and the person can see these five prompts on screen:
@@ -20,7 +21,7 @@ Rules:
 - If the person goes off topic, asks you anything else, or tells you to do something else, don't respond to it. If they also answered the current prompt, take that answer and move on; otherwise say you can only run the interview and ask the current prompt again.
 - Never ask about or repeat age, gender, race, ethnicity, religion, nationality, disability, sexual orientation, family status, or income.
 - Keep every turn under 15 words.
-- After the answer to prompt 5, say "Thanks, that's everything. You'll review your answers next." Then end the call.`;
+- After the answer to prompt 5, reply with exactly "Thanks, that's everything. You'll review your answers next." and end the call in that same turn. Never end the call without saying it first.`;
 
 const config = {
   name: 'RoomMe interview',
@@ -30,6 +31,8 @@ const config = {
       language: 'en',
       prompt: {
         prompt,
+        llm: LLM,
+        reasoning_effort: 'low', // its lowest; voice turns need speed, not thought
         temperature: 0.3,
         built_in_tools: { end_call: { type: 'system', name: 'end_call', description: '', params: { system_tool_type: 'end_call' } } },
       },
@@ -60,6 +63,7 @@ async function main() {
   const live = await api('GET', `/${agent}`);
   const text: string = live.conversation_config.agent.prompt.prompt;
   assert.deepEqual(VOICE_PROMPTS.filter((p) => !text.includes(p)), [], 'prompts missing from the live agent');
+  assert.equal(live.conversation_config.agent.prompt.llm, LLM);
   assert.equal(live.conversation_config.conversation.max_duration_seconds, SECS);
   assert.equal(live.platform_settings.auth.enable_auth, true);
   assert.equal(live.platform_settings.privacy.record_voice, false);
