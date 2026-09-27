@@ -1,10 +1,10 @@
 # Project description and plan
 
-**Name:** Roomme, at [roomme.tech](https://roomme.tech) (see §4). **Track:** Live Better. **Also entering:** Photon (iMessage via Spectrum), MLH Gemini, MLH Tiger Data, MLH ElevenLabs, MLH .Tech domain.
+**Name:** RoomMe, at [roomme.tech](https://roomme.tech) (see §4). **Track:** Live Better. **Also entering:** Photon (iMessage via Spectrum), MLH Gemini, MLH Tiger Data, MLH ElevenLabs, MLH .Tech domain.
 
-**Pitch:** A bad roommate is a daily tax on your sleep, your kitchen and your peace. Roomme matches NYC newcomers on how they actually live and catches the mismatches before anyone signs a lease.
+**Pitch:** A bad roommate is a daily tax on your sleep, your kitchen and your peace. RoomMe matches NYC newcomers on how they actually live and catches the mismatches before anyone signs a lease.
 
-**Scope: matching only.** Roomme ends when a pair is matched and handed off to the listing. There are no post-move-in features: no reminders, chores or house chat.
+**Scope: matching only.** RoomMe ends when a pair is matched and handed off to the listing. There are no post-move-in features: no reminders, chores or house chat.
 
 Judging (Devpost): Concept 30%, Functionality 30%, Wow 20%, UX 10%, Value to Community 10%. The earlier brainstorm is in [IDEAS.md](IDEAS.md).
 
@@ -36,7 +36,7 @@ Judging (Devpost): Concept 30%, Functionality 30%, Wow 20%, UX 10%, Value to Com
 ### 2. Is it Live Better?
 The original flow was **borderline**. It ended when the lease was signed, which makes it a housing-search product, closer to Hack the City's "housing." Live Better is about "helping one person's day run smoother."
 
-**Decision: matching only.** Roomme doesn't follow the pair after move-in. The Live Better case rests on *prevention*: a mismatched roommate is a daily tax on sleep, cleanliness and noise for 12 months. Matching on daily routines (bedtime, dishes, guests, noise) is what makes "one person's day run smoother." Say that out loud in the pitch, since judges may still see this as housing search.
+**Decision: matching only.** RoomMe doesn't follow the pair after move-in. The Live Better case rests on *prevention*: a mismatched roommate is a daily tax on sleep, cleanliness and noise for 12 months. Matching on daily routines (bedtime, dishes, guests, noise) is what makes "one person's day run smoother." Say that out loud in the pitch, since judges may still see this as housing search.
 
 **Originality now rests on the matching itself:**
 - a voice interview instead of forms
@@ -51,8 +51,8 @@ The original flow was **borderline**. It ended when the lease was signed, which 
 - **Evidence to collect at the event:** a 2-minute poll of 20–30 hackers ("Have you had a roommate conflict? About what? Where did you find them?"). Put the results on a slide. That's first-hand data about this exact user group.
 
 ### 4. Name
-**Roomme**: "room me," with a nod to "roomie." The site is [roomme.tech](https://roomme.tech), which is also the MLH .Tech domain entry.
-- **Write it as "Roomme" everywhere.** The double m is easy to misread, so keep the spelling consistent across the logo, the deck and Devpost.
+**RoomMe**: "room me," with a nod to "roomie." The site is [roomme.tech](https://roomme.tech), which is also the MLH .Tech domain entry.
+- **Write it as "RoomMe" everywhere** (the design system's final pass; the capital M keeps "room me" readable). Keep the spelling consistent across the logo, the deck and Devpost. The domain stays lowercase: roomme.tech.
 - **Expect a comparison with Roomi**, an existing roommate app with a similar name. Our answer is what Roomi doesn't do: habit-based matching from a voice interview, explained scores, and contradiction checks before you commit.
 
 ### 5. Product flow v2
@@ -71,7 +71,7 @@ The original flow was **borderline**. It ended when the lease was signed, which 
 5. **Shortlist 5.** Chat opens only on **mutual** interest.
 6. **iMessage concierge (Photon/Spectrum):** the agent introduces the pair, relays messages with numbers hidden, and privately suggests a question for each flagged discrepancy.
 7. **Meetup:** the agent proposes 3 times from both people's free windows plus a public spot near the listing, and sends safety tips.
-8. **Lock and hand off (the end of Roomme):** after mutual confirmation, Gemini drafts a one-page House Agreement to set expectations *before* signing (quiet hours, guests, chores, bills, thermostat) and flags open questions. The listing locks for the pair, the broker message is drafted, and the pair leaves for the source listing to apply.
+8. **Lock and hand off (the end of RoomMe):** after mutual confirmation, Gemini drafts a one-page House Agreement to set expectations *before* signing (quiet hours, guests, chores, bills, thermostat) and flags open questions. The listing locks for the pair, the broker message is drafted, and the pair leaves for the source listing to apply.
 
 ### 6. Architecture
 - **Web:** Next.js (TypeScript) on Vercel. It's the same language as Spectrum.

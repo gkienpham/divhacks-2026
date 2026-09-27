@@ -1,10 +1,10 @@
-# Roomme
+# RoomMe
 
 **[roomme.tech](https://roomme.tech)**
 
 Roommate matching + renter support for NYC. DivHacks 2026, **Live Better** track.
 
-Roomme matches NYC newcomers on how they actually live and catches mismatches before the lease. **Scope: matching only.** Roomme ends at the match and hand-off to the listing.
+RoomMe matches NYC newcomers on how they actually live and catches mismatches before the lease. **Scope: matching only.** RoomMe ends at the match and hand-off to the listing.
 
 **Stack:**
 

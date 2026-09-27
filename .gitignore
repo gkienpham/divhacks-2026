@@ -14,3 +14,6 @@ dist/
 
 # raw API responses (Zillow data stays out of the public repo)
 /data/
+
+# Claude Code worktrees
+/.claude/worktrees/

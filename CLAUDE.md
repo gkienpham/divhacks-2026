@@ -1,9 +1,9 @@
 # CLAUDE.md
 
-DivHacks 2026 (Columbia, Sep 26–27): roommate matching and renter support for NYC, **Live Better** track. The project is **Roomme** ([roomme.tech](https://roomme.tech)). The source of truth is `docs/PROJECT.md`; read it before planning or building.
+DivHacks 2026 (Columbia, Sep 26–27): roommate matching and renter support for NYC, **Live Better** track. The project is **RoomMe** ([roomme.tech](https://roomme.tech)). The source of truth is `docs/PROJECT.md`; read it before planning or building.
 
 ## Stack
-- **Web:** Next.js (TypeScript) on Vercel.
+- **Web:** Next.js (TypeScript) on Vercel. The app lives in `web/` (Next 16; see `web/README.md`). Its design components in `web/components/rm/` are verbatim from the Claude Design bundle.
 - **Database:** Tiger Data (Postgres + TimescaleDB). Use one database only; don't add Supabase or Mongo. The hypertable is `listing_snapshots`, with the `rent_by_area_daily` continuous aggregate.
   - Service `bj9teo40nn`. It has no pooler, so keep connection pools tiny.
   - Run ad-hoc SQL with `tiger db query bj9teo40nn -c "..."`; there's no local psql.
@@ -23,7 +23,7 @@ DivHacks 2026 (Columbia, Sep 26–27): roommate matching and renter support for 
 - **AI:** Gemini for open-answer signals, contradictions, match cards and the House Agreement. Always use JSON schemas.
 
 ## Rules
-- **Scope is matching only.** Roomme ends at the match and hand-off to the listing. Don't build post-move-in features (reminders, chores, house chat).
+- **Scope is matching only.** RoomMe ends at the match and hand-off to the listing. Don't build post-move-in features (reminders, chores, house chat).
 - The compatibility score is **deterministic**. The LLM never produces it.
 - Keep the `AI_OFF` fallback working.
 - Match on habits only; never on protected traits.
