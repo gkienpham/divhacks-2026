@@ -42,11 +42,10 @@ function Hero() {
   // No hero photo (Kien): the section's ink background carries the white copy.
   return <section className="rm-on-dark" style={{ position: 'relative', height: '100vh', minHeight: 820, overflow: 'hidden', background: 'var(--ink)', color: '#fff' }}>
     <div style={{ ...wrap, position: 'relative', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingTop: 72, pointerEvents: 'none' }}>
-      <div className="rm-rise" style={{ animationDelay: '0ms' }}><LT.Eyebrow onDark>Don’t sign on a vibe check.</LT.Eyebrow></div>
-      <h1 className="rm-rise" style={{ animationDelay: '120ms', margin: '32px 0 0', fontSize: 92, fontWeight: 500, lineHeight: .98, letterSpacing: '-0.035em', maxWidth: '15ch' }}>Find a roommate who lives like you do.</h1>
+      <h1 className="rm-rise" style={{ animationDelay: '120ms', margin: 0, fontSize: 92, fontWeight: 500, lineHeight: .98, letterSpacing: '-0.035em', maxWidth: '15ch' }}>Find a roommate who lives like you do.</h1>
       <p className="rm-rise" style={{ animationDelay: '260ms', margin: '40px 0 0', maxWidth: 440, fontSize: 15, lineHeight: 1.625, color: 'rgba(255,255,255,.75)' }}>RoomMe matches NYC renters on sleep, dishes, guests and noise, and flags mismatches before you sign a lease.</p>
       <div className="rm-rise" style={{ animationDelay: '380ms', marginTop: 48, display: 'flex', alignItems: 'center', gap: 14, pointerEvents: 'auto' }}>
-        <LT.ButtonOnPhoto href="/start">Find my roommate</LT.ButtonOnPhoto>
+        <LT.ButtonOnPhoto href="/start" style={{ height: 64, padding: '0 32px', fontSize: 18 }}>Find my roommate</LT.ButtonOnPhoto>
         <LT.CircleIconButton onDark icon="sliders-horizontal" label="See how matching works" onClick={() => jump('safety')} />
         <button type="button" onClick={() => jump('safety')} style={{ background: 'none', border: 0, padding: 0, cursor: 'pointer', color: '#fff', fontFamily: 'inherit', fontSize: 15, fontWeight: 500, letterSpacing: '-0.01em' }}>See how matching works</button>
       </div>
@@ -61,7 +60,7 @@ function TrustStrip({ stats }) {
   const cells = [
     <>{stats.listings.toLocaleString('en-US')} NYC listings · {stats.neighborhoods} neighborhoods</>,
     <>1.41% vacancy, lowest since 1968 <span style={{ color: 'var(--muted-foreground)', fontWeight: 400 }}>(NYC HPD)</span></>,
-    <>Your match % is math, not AI</>,
+    <>Your match % is a metric</>,
   ];
   return <section style={{ borderBottom: '1px solid var(--border)' }}>
     <div style={{ ...wrap, display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))' }}>
@@ -149,7 +148,7 @@ function OptInFragment() {
 // Kien and Sam are sample-data.js profiles; every number is theirs, scored by lib/score.
 const ME_TAGS = tags(ME.answers);
 const TABS = [
-  { t: 'Math, not AI', d: `Your match % is the average agreement across your ${N} answers. AI never sets it.`, f: () => <div style={{ width: '100%', maxWidth: 460, display: 'grid', gap: 28 }}>
+  { t: 'Metric', d: `Your match % is the average agreement across your ${N} answers. AI never sets it.`, f: () => <div style={{ width: '100%', maxWidth: 460, display: 'grid', gap: 28 }}>
     <div style={{ display: 'grid', justifyItems: 'start', gap: 16, fontFamily: 'var(--font-sans)' }}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, color: 'var(--ink)', whiteSpace: 'nowrap' }}>
         <span style={{ fontSize: 60, fontWeight: 500, lineHeight: 1, letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums' }}>{SAM.s + '%'}</span>
@@ -355,8 +354,7 @@ function FinalCTA({ hoods }) {
   return <section style={{ ...wrap, padding: '112px 48px' }}>
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12,minmax(0,1fr))', columnGap: 48, alignItems: 'center' }}>
       <div style={{ gridColumn: 'span 5' }}>
-        <LT.Eyebrow>Ready when you are</LT.Eyebrow>
-        <h2 style={{ margin: '26px 0 0', fontSize: 56, fontWeight: 500, lineHeight: 1.02, letterSpacing: '-0.03em', color: 'var(--ink)' }}>Don’t sign on a vibe check.</h2>
+        <h2 style={{ margin: 0, fontSize: 56, fontWeight: 500, lineHeight: 1.02, letterSpacing: '-0.03em', color: 'var(--ink)' }}>Ready when you are.</h2>
         <div style={{ marginTop: 40, display: 'flex', alignItems: 'center', gap: 28 }}>
           <LT.ButtonInk size="lg" href="/start">Find my roommate</LT.ButtonInk>
           <LT.LinkUnderline href="#safety">See how matching works</LT.LinkUnderline>
@@ -378,7 +376,7 @@ function LandingFooter() {
     columns={[
       { title: 'Product', links: ['How it works', 'Neighborhoods', 'FAQ'] },
       { title: 'Trust', links: ['Fair housing', 'Privacy', 'AI guardrails'] },
-      { title: 'Team', links: ['Built at DivHacks 2026', 'Columbia'] },
+      { title: 'Team', links: ['Built at DivHacks 2026'] },
     ]}
     legal="© 2026 RoomMe · Listings come from public sources and link back to the original. RoomMe is not a broker." />;
 }

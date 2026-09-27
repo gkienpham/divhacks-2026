@@ -72,7 +72,7 @@ export default function TopMatchesScreen({ ai = true, me, matches = [], cap = 5,
         <div style={{ gridColumn: '1 / span 7' }}>
           <MG.Eyebrow>Matches</MG.Eyebrow>
           <h1 style={{ margin: '24px 0 0', fontSize: 84, fontWeight: 500, lineHeight: .98, letterSpacing: '-0.035em', color: 'var(--ink)' }}>Your top {n && n < 20 ? n : 20}</h1>
-          <p style={{ margin: '24px 0 0', fontSize: 15, lineHeight: 1.625, color: 'var(--muted-foreground)', maxWidth: 440 }}>Ranked by your match score: math on your answers, not AI.</p>
+          <p style={{ margin: '24px 0 0', fontSize: 15, lineHeight: 1.625, color: 'var(--muted-foreground)', maxWidth: 440 }}>Ranked by your match score: a metric built from your answers.</p>
           <p role="status" style={{ margin: note ? '8px 0 0' : 0, fontSize: 14, color: 'var(--ink)' }}>{note}</p>
         </div>
         <div style={{ gridColumn: '9 / span 4', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 12 }}>

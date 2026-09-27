@@ -12,7 +12,7 @@ export const BUDGETS = [
 export type BudgetLabel = (typeof BUDGETS)[number]["label"];
 export const budgetBand = (label: string) => BUDGETS.find((b) => b.label === label) ?? null;
 
-// 2B pre-screen. `def` is the preselected answer.
+// 2B pre-screen. /start preselects nothing; `def` is a typical answer, for lib/matches.check.ts's test profile.
 export const PRESCREEN = [
   { id: "where", label: "Where do you want to be?", multi: true, opts: ["Near my school/work", "Downtown", "Quiet residential", "Anywhere near transit"], def: ["Near my school/work", "Anywhere near transit"] },
   { id: "commute", label: "Max commute", opts: ["≤15 min", "16–30", "31–45", "46–60", "60+"], def: ["16–30"] },
