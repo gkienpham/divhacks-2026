@@ -4,3 +4,5 @@ import type { CSSProperties } from "react";
  */
 export interface WordmarkProps { onDark?: boolean; size?: number; showIcon?: boolean; style?: CSSProperties; }
 export declare function Wordmark(props: WordmarkProps): import("react").JSX.Element;
+/** The house split into two rooms, on its own (the app icon and link preview use it). */
+export declare function WordmarkIcon(props: { size?: number; color?: string; strokeWidth?: number }): import("react").JSX.Element;
