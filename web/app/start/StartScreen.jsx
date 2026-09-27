@@ -116,7 +116,7 @@ export default function StartScreen({ rooms, me }) {
     setSaving(true); setFailed(false);
     const res = await fetch('/api/profile', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name.trim(), ...(email.trim() && { email: email.trim() }), prescreen: toPrescreen(ps) }),
+      body: JSON.stringify({ name: name.trim(), email: email.trim(), prescreen: toPrescreen(ps) }), // '' clears a saved email
     }).catch(() => null);
     if (res?.ok) router.push('/profile'); // stays disabled until /profile loads
     else { setSaving(false); setFailed(true); }

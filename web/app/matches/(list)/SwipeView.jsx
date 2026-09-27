@@ -6,6 +6,7 @@ import * as MS from '@/components/rm';
 import { perRoomLabel } from '@/components/shared';
 import { QUICK } from '@/lib/questions';
 import { seenOn, listingHref, bedsLabel } from '@/lib/format';
+import { Bars, Reasons, HOW_SCORED } from '@/app/matches/[id]/parts';
 
 const MLab = ({ children }) => <div style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--muted-foreground)' }}>{children}</div>;
 const Rule = () => <div style={{ height: 1, background: 'var(--border)', margin: '28px 0' }} />;
@@ -60,18 +61,16 @@ function SwipeCard({ m }) {
         <span style={{ fontSize: 60, fontWeight: 500, lineHeight: 1, letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums' }}>{m.score}%</span>
         <span style={{ fontSize: 28, fontWeight: 500, lineHeight: 1, letterSpacing: '-0.02em' }}>Match</span>
       </div>
-      <MS.LinkUnderline href="/#faq" size={13}>How it’s scored</MS.LinkUnderline>
+      <MS.LinkUnderline href="/#the-math" size={13}>How it’s scored</MS.LinkUnderline>
     </div>
     <Rule />
-    <MLab>Why you matched</MLab>
-    <div style={{ marginTop: 20, display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', columnGap: 32, rowGap: 22 }}>
-      {m.bars.map(b => <MS.HabitBar key={b.key} label={b.label} icon={b.icon} value={Math.round(b.similarity * 100)} you={b.a} them={b.b} themName={o.name} />)}
-    </div>
+    <MLab>Where you line up</MLab>
+    <div style={{ marginTop: 20 }}><Bars m={m} /></div>
     {m.ai && m.summary && <><Rule />
       <MS.AISummaryTag />
       <p style={{ margin: '12px 0 0', fontSize: 18, fontWeight: 500, lineHeight: 1.45, letterSpacing: '-0.01em', color: 'var(--ink)', textWrap: 'pretty' }}>{m.summary}</p></>}
     <Rule />
-    <MS.ClickClashList aiWritten={m.ai} click={m.click} clash={m.clash} />
+    <Reasons m={m} />
     {m.contradiction && <WorthAsking c={m.contradiction} name={o.name} />}
     {saved.length > 0 && <><Rule />
       <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--ink)' }}>{m.savedOverlap ? `You both saved ${m.savedOverlap === 1 ? '1 listing' : m.savedOverlap + ' listings'}` : `${o.name} saved`}</div>
@@ -133,7 +132,8 @@ export default function SwipeView({ ms, act, full, cap, onGrid }) {
   return <div style={{ marginTop: 56, display: 'grid', gridTemplateColumns: 'repeat(12,minmax(0,1fr))', columnGap: 48, alignItems: 'start' }}>
     <aside style={{ gridColumn: '1 / span 3', ...side }}>
       <div style={{ fontSize: 18, fontWeight: 500, letterSpacing: '-0.01em', color: 'var(--ink)' }}>How your score works</div>
-      <p style={{ margin: '12px 0 0', fontSize: 14, lineHeight: 1.6, color: 'var(--muted-foreground)' }}>Dealbreakers, budget and apartment size filter first. Then a weighted comparison of 10 habits; bedtime and cleaning count most. Voice answers never change it.</p>
+      <p style={{ margin: '12px 0 0', fontSize: 14, lineHeight: 1.6, color: 'var(--muted-foreground)' }}>{HOW_SCORED}</p>
+      <MS.LinkUnderline href="/#the-math" size={13} style={{ marginTop: 16 }}>How it’s scored</MS.LinkUnderline>
     </aside>
     <div ref={top} style={{ gridColumn: '4 / span 6', display: 'flex', flexDirection: 'column', alignItems: 'center', scrollMarginTop: 24 }}>
       {cur ? <>

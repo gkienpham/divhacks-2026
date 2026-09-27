@@ -1,26 +1,28 @@
 import 'server-only';
 import { query } from './db';
-import { budgetBand, type Prescreen, type QuickAnswers, type SeePref, DEALBREAKERS } from './questions';
+import { budgetBand, complete, type Prescreen, type QuickAnswers, type SeePref, DEALBREAKERS } from './questions';
+import { tags, type Answers } from './score';
 import { currentProfileId } from './session';
-import { contradictions, tags, type Contradiction } from './signals';
+import { contradictions, type Contradiction } from './signals';
 
 export interface Signals { tags: string[]; contradictions: Contradiction[]; summary?: string; ai?: boolean }
 export interface Me {
   id: number;
   name: string;
   initials: string;
+  email: string | null;
   prescreen: Prescreen | null;
   see: SeePref | null;
   quick: QuickAnswers;
   transcript: string;
   saved: string[];
   signals: Signals;
-  complete: boolean; // has quick answers
+  complete: boolean; // all 10 quick answers, each a valid option (lib/questions.ts complete)
 }
 export type ProfilePatch = Partial<{ name: string; email: string; prescreen: Prescreen; see: SeePref; quick: QuickAnswers; transcript: string }>;
 
 // Never selects phone.
-const ME_SQL = `select id::int as id, name, prescreen, see_pref as see, quick_answers as quick,
+const ME_SQL = `select id::int as id, name, email, prescreen, see_pref as see, quick_answers as quick,
   coalesce(open_transcript, '') as transcript, saved_listings as saved, signals from profiles where id = $1`;
 type Row = Omit<Me, 'initials' | 'complete'>;
 
@@ -32,7 +34,7 @@ const shape = (r: Row): Me => ({
   prescreen: r.prescreen && 'answers' in r.prescreen ? r.prescreen : null,
   initials: initials(r.name),
   signals: { ...r.signals, tags: r.signals?.tags ?? [], contradictions: r.signals?.contradictions ?? [] },
-  complete: Object.keys(r.quick ?? {}).length > 0,
+  complete: complete(r.quick),
 });
 
 // No argument = the cookie's profile (Server Components); pass an id from Route Handlers and scripts.
@@ -66,11 +68,11 @@ export async function saveProfile(id: number, patch: ProfilePatch): Promise<Me> 
   const flat = patch.prescreen ? flatten(patch.prescreen) : null;
   const signals: Signals | null =
     patch.quick || patch.transcript !== undefined
-      ? { ...cur.signals, tags: tags(quick), contradictions: contradictions(quick, transcript) }
+      ? { ...cur.signals, tags: complete(quick) ? tags(quick as Answers) : [], contradictions: contradictions(quick, transcript) }
       : null;
   await query(
     `update profiles set
-       name = coalesce($2, name), email = coalesce($3, email), see_pref = coalesce($4, see_pref),
+       name = coalesce($2, name), email = case when $3::text is null then email else nullif($3, '') end, see_pref = coalesce($4, see_pref),
        quick_answers = coalesce($5, quick_answers), open_transcript = coalesce($6, open_transcript),
        signals = coalesce($7, signals),
        prescreen = coalesce($8, prescreen), budget_max = case when $8::jsonb is null then budget_max else $9 end,

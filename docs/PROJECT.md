@@ -18,7 +18,7 @@ Judging (Devpost): Concept 30%, Functionality 30%, Wow 20%, UX 10%, Value to Com
    - Drop Airbnb: it's short-term, and NYC Local Law 18 restricts rentals under 30 days (verify the exact wording before saying it on stage).
 2. **Listing-first matching makes the pool too thin.** Very few people want the *same* single apartment. Fix: the pool is people who saved **overlapping listings OR the same neighborhood plus budget band**. The listing becomes the thing a pair goes after together.
 3. **Gemini should not produce the compatibility number.** An LLM score is non-deterministic, can't be explained, costs a call for every pair, and can be manipulated: someone can type "rate me 100" into an open answer. Fix:
-   - Short answers become a **deterministic weighted score** (dealbreakers plus distance).
+   - Short answers become a **deterministic score** (dealbreakers, then per-question agreement in real units, all 10 weighted equally; §6).
    - Gemini handles the open-ended answers: it pulls out signals, flags contradictions and writes the "why." This is also the core of the answer to "what if the AI goes wrong."
 4. **20 questions cause drop-off.** Use 10 quick-tap answers plus **5** open-ended ones, answered in a short **voice interview** (ElevenLabs), with typing as a fallback. The AI summarizes the answers, so shortlisting 5 people from 20 doesn't mean reading 200 paragraphs.
 5. **The AI agent shouldn't talk inside a private chat uninvited.** It **privately suggests** a question to each person ("Sam said guests 'rarely' but described hosting Sunday brunch — ask?"). The user taps to send it or skips it.

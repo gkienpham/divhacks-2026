@@ -4,10 +4,12 @@
 // one fixed-seed PRNG and saved listings from a second, so a listings re-pull can move saved zpids (and the areas and
 // lines read off them) but never the answers or transcripts.
 // Exactly 20 transcripts carry a planted contradiction (the eval set, §7): the run aborts before writing unless
-// lib/signals.ts flags exactly those 20 sentences and nothing else.
+// lib/signals.ts flags exactly those 20 sentences and nothing else. Everyone answers all 10 quick questions with a
+// lib/score.ts option (the app has no Skip), and the run also aborts unless score() runs on every pair.
 import assert from 'node:assert/strict';
 import { getPool } from '../lib/db';
-import { BUDGETS, DEALBREAKERS, PRESCREEN, QUICK, SEE_PREFS, SUBWAY_LINES, type Prescreen, type PrescreenId, type QuickAnswers, type QuickKey } from '../lib/questions';
+import { BUDGETS, DEALBREAKERS, PRESCREEN, QUICK, SEE_PREFS, SUBWAY_LINES, complete, type Prescreen, type PrescreenId, type QuickAnswers, type QuickKey } from '../lib/questions';
+import { QUESTIONS, rank, score, type Answers } from '../lib/score';
 import { contradictions } from '../lib/signals';
 
 const mulberry32 = (a: number) => () => {
@@ -237,7 +239,6 @@ const LINES: Record<string, string[]> = { // SUBWAY_LINES serving each searched 
   Harlem: ['A', '1'], 'Jackson Heights': ['7'], Kingsbridge: ['1'], 'Long Island City': ['7', 'N/W'], 'Morningside Heights': ['1'],
   Ridgewood: ['L'], Sunnyside: ['7'], 'Sunset Park': ['N/W'], 'Upper West Side': ['1'], 'Washington Heights': ['A', '1'], Williamsburg: ['L'],
 };
-const SKIPPABLE: QuickKey[] = ['sleepNoise', 'wfh', 'overnight', 'dishes', 'noise'];
 
 assert.equal(new Set(NAMES).size, 150);
 assert.equal(ARCH.reduce((s, a) => s + a.n, 0), 150);
@@ -246,7 +247,7 @@ assert.equal(ARCH.reduce((s, a) => s + a.n, 0), 150);
 const folks = shuffle(ARCH.flatMap((a) => Array<Arch>(a.n).fill(a))).map((a, n) => {
   const i = Object.fromEntries(QUICK.filter((q) => q.k !== 'sleepNoise').map((q) => [q.k, weighted(a.q[q.k as Single])])) as Idx;
   if (a.night && rnd() < a.night) i.bedtime = i.wake = 4;
-  const sleep = [[3], [4], [0], [1], [2], [0, 2], [5]][weighted([55, 12, 13, 8, 7, 3, 2])].map((k) => SLEEP[k]);
+  const sleep = [[3], [0], [1], [2], [0, 2], [4]][weighted([67, 13, 8, 7, 3, 2])].map((k) => SLEEP[k]); // "No one's mentioned it" first
   const place = pick(a.places);
   let where = pick(a.where).filter((w) => w !== 'Near my school/work' || place.school);
   if (!where.length) where = ['Anywhere near transit'];
@@ -266,15 +267,13 @@ const folks = shuffle(ARCH.flatMap((a) => Array<Arch>(a.n).fill(a))).map((a, n) 
       pets: [PRE.pets[weighted([1.6, 0.9, 6, 1.5])]],
     },
     plant: null as { key: Single; text: string } | null,
-    skip: [] as QuickKey[],
     saved: [] as string[],
     areas: [] as string[],
   };
 });
 type Folk = (typeof folks)[number];
 
-// 2. Plants, spread over archetypes (least-planted first; stable sort keeps the shuffle for ties), then ~10% skip one or
-// two answers (never a planted one).
+// 2. Plants, spread over archetypes (least-planted first; stable sort keeps the shuffle for ties).
 const planted: Record<string, number> = {};
 for (const [key, max, fit, texts] of PLANTS) {
   const pool = shuffle(folks.filter((p) => !p.plant && fit.includes(p.a.key)));
@@ -285,7 +284,6 @@ for (const [key, max, fit, texts] of PLANTS) {
     planted[p.a.key] = (planted[p.a.key] ?? 0) + 1;
   }
 }
-for (const p of shuffle(folks.filter((p) => !p.plant)).slice(0, 15)) p.skip = shuffle(SKIPPABLE).slice(0, rnd() < 0.7 ? 1 : 2);
 
 // 3. Dealbreakers (after plants, which can change smoking) and transcripts.
 const people = folks.map((p) => {
@@ -302,7 +300,7 @@ const people = folks.map((p) => {
     if (rnd() < 0.2) lines.splice(2, 1); // skipped "How you bring up a problem"
   }
   const quick: QuickAnswers = {};
-  for (const q of QUICK) if (!p.skip.includes(q.k)) quick[q.k] = q.k === 'sleepNoise' ? p.sleep : q.opts[i[q.k as Single]];
+  for (const q of QUICK) quick[q.k] = q.k === 'sleepNoise' ? p.sleep : q.opts[i[q.k as Single]];
   if (quick.sleepNoise?.includes('Other')) quick.sleepNoiseOther = 'I sleep with a fan on';
   return { ...p, dealbreakers, quick, transcript: lines.join(' ') };
 });
@@ -312,6 +310,12 @@ for (const p of people) {
   assert.deepEqual(contradictions(p.quick, p.transcript).map((c) => `${c.key}: ${c.voice}`), p.plant ? [`${p.plant.key}: ${p.plant.text}`] : [], p.name);
 }
 assert.equal(people.filter((p) => p.plant).length, 20);
+// lib/score.ts must accept every answer set and every pair before anything is written.
+const pairScores: number[] = [];
+for (const [x, a] of people.entries()) {
+  assert.ok(complete(a.quick), `${a.name}: incomplete answers`);
+  for (const b of people.slice(x + 1)) pairScores.push(score(a.quick as Answers, b.quick as Answers).pct);
+}
 
 type Home = { zpid: string; neighborhood: string; beds: number; per_room: number };
 const fits = (p: Folk, l: Home) => {
@@ -399,6 +403,13 @@ async function main() {
     console.log('budget', tally(people.map((p) => BUDGETS[p.b].label)));
     console.log('apartment', tally(people.map((p) => p.apt)));
     console.log('people sharing a saved listing', people.filter((p) => p.saved.some((z) => savedBy[z] > 1)).length);
+    const dist = (xs: number[]) => { const s = [...xs].sort((a, b) => a - b); return { n: s.length, min: s[0], p25: s[Math.floor(s.length / 4)], median: s[Math.floor(s.length / 2)], p75: s[Math.floor((3 * s.length) / 4)], max: s[s.length - 1] }; };
+    console.log('match % over all seed pairs', dist(pairScores));
+    // The demo user from lib/sample-data.js (Kien): 23:00 bed, 7–8 wake, cleans 2×, dishes same day, 1–2 guests, quiet, no smoking.
+    const demo = Object.fromEntries(QUESTIONS.map((f, j) => [f.k, j === 6 ? [f.opts[3]] : f.opts[[2, 2, 2, 1, 1, 1, 0, 1, 1, 0][j]]])) as Answers;
+    const top = rank({ id: 'demo', answers: demo, pets: 'No pets, fine if roommates do', deal: [DEALBREAKERS[0]] },
+      people.map((p) => ({ id: p.name, answers: p.quick as Answers, pets: p.answers.pets[0], deal: p.dealbreakers }))).slice(0, 20);
+    console.log('demo user top 20', dist(top.map((t) => t.pct)));
     console.log('planted contradictions');
     console.table(people.filter((p) => p.plant).map((p) => ({ name: p.name, archetype: p.a.key, rule: p.plant!.key, quick: p.quick[p.plant!.key], voice: p.plant!.text })));
   } catch (e) {

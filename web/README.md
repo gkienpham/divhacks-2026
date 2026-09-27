@@ -19,21 +19,22 @@ Anonymous until OAuth: an httpOnly `rm_uid` cookie holds `profiles.session_token
 ## Data layer
 - `lib/db.ts`: one pooled connection (`max: 1`), because Tiger has no pooler.
 - `lib/listings.ts`: listing queries, trust badge, photos. `lib/questions.ts`: the frozen question set (client + server).
-- `lib/scoring.ts` / `lib/signals.ts`: deterministic score, habit tags, contradictions, rule-based copy, agreement draft. Pure TS.
+- `lib/score.ts`: the match % (dealbreakers both ways, per-question agreement in real units, mean of 10), the 10 questions, bars, rule-based click/clash and habit tags. Pure TS, no AI; `lib/questions.ts` re-exports its `QUESTIONS` as `QUICK`. `lib/signals.ts`: contradictions and the agreement draft.
 - `lib/profiles.ts`, `lib/matches.ts`: people and pairs. Sample profiles reciprocate when the score is ≥ 70 (`LIKE_BACK`); "Simulate … confirming" exists only for them.
 - `lib/ai.ts`: Gemini REST with a JSON schema, 8 s timeout, cached per viewer in `matches.reasons.ai`; null on any failure.
 - API: `GET /api/me`, `POST /api/profile`, `POST /api/saved`, `GET|POST /api/matches/[id]`, `GET /api/voice/session`. Bodies are validated against `lib/questions.ts` (400 on anything unknown).
 
 Checks, from `web/`:
 ```bash
+npx tsx lib/score.check.ts                                                      # match-% math, no DB
 npx tsx --env-file=.env.local --conditions=react-server scripts/seed.ts        # 150 synthetic profiles (is_synthetic = true)
 npx tsx --env-file=.env.local --conditions=react-server lib/listings.check.ts
 npx tsx --env-file=.env.local --conditions=react-server lib/matches.check.ts   # profile → top matches → like → meetup → agreement → lock
 ```
 
 ## Voice interview (ElevenLabs)
-1. Create an Agents Platform agent. Its prompt asks the 5 `VOICE_PROMPTS` from `lib/questions.ts`, one at a time, and wraps up at about 90 s (set the max call duration there too). Turn on authentication so the agent needs a signed URL.
-2. Set `ELEVENLABS_API_KEY` and `ELEVENLABS_AGENT_ID`. `GET /api/voice/session` then returns `{ signedUrl }` (503 `{ configured: false }` when unset).
+1. Create an Agents Platform agent. Its prompt asks the 5 `VOICE_PROMPTS` from `lib/questions.ts`, one at a time, and wraps up at about 90 s. In the agent's settings set the max call duration to ~90 s, turn audio saving off (Privacy settings) and turn on authentication so the agent needs a signed URL.
+2. Set `ELEVENLABS_API_KEY` and `ELEVENLABS_AGENT_ID`. `GET /api/voice/session` then returns `{ signedUrl }`, or 200 `{ configured: false }` when unset (the client falls back to typing).
 3. Client wiring point: the `startVoiceSession({ onLine, onEnd })` prop of `VoiceScreen` in `app/profile/VoiceScreens.jsx`. Fetch the signed URL, start the conversation with the ElevenLabs client SDK, call `onLine` per transcript line and `onEnd` when the agent hangs up; return a stop function. Audio is never stored; the user edits the transcript before saving, and it never changes the score.
 
 **Deploy:** Vercel with Root Directory `web`. The region is `iad1` (set in `vercel.json`), next to Tiger in us-east-1. Set the env vars above in Vercel and never prefix one `NEXT_PUBLIC_`.

@@ -7,7 +7,7 @@ export const GET = () =>
   handle(async () => {
     const { ELEVENLABS_API_KEY: key, ELEVENLABS_AGENT_ID: agent } = process.env;
     const headers = { 'cache-control': 'no-store' };
-    if (!key || !agent) return json({ configured: false }, 503, headers);
+    if (!key || !agent) return json({ configured: false }, 200, headers); // not an error: the client falls back to typing
     const res = await fetch(`https://api.elevenlabs.io/v1/convai/conversation/get-signed-url?agent_id=${encodeURIComponent(agent)}`, {
       headers: { 'xi-api-key': key },
       signal: AbortSignal.timeout(8_000),

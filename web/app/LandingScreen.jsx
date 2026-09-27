@@ -4,8 +4,20 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import * as LT from '@/components/rm';
-import { usd } from '@/lib/format';
-import { BUDGETS, QUICK } from '@/lib/questions';
+import { usd, said } from '@/lib/format';
+import { BUDGETS } from '@/lib/questions';
+import { QUESTIONS, agreement, tags } from '@/lib/score';
+import { ME, personById } from '@/lib/sample-data';
+
+// Every match number on this page comes from lib/score or Sam's sample profile, scored by it. None are typed in.
+const SAM = personById('sam');
+const Q = Object.fromEntries(QUESTIONS.map(f => [f.k, f]));
+const N = QUESTIONS.length;
+const hhmm = h => String(Math.floor(h)).padStart(2, '0') + ':' + String(Math.round(h % 1 * 60)).padStart(2, '0');
+const G = Q.guests.opts, guests = (a, b) => agreement('guests', G[a], G[b]);
+const HALF = agreement('sleepNoise', ['I snore'], ['No one’s mentioned it']);
+const SI = Q.smoking.opts.indexOf('Sometimes inside');
+const bar = p => <LT.HabitBar key={p.k} icon={p.icon} label={p.label} value={p.v} you={said(p.you)} them={said(p.them)} themName={SAM.n} />;
 
 const NAV = { 'How it works': 'how-it-works', 'Neighborhoods': 'neighborhoods', 'Safety': 'safety', 'FAQ': 'faq' };
 const jump = id => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
@@ -58,13 +70,13 @@ function TrustStrip({ stats }) {
   </section>;
 }
 
-// Each mismatch, and the quick-tap question (lib/questions.ts) that catches it before the lease.
+// Each mismatch, and the quick-tap question (lib/score.ts) that catches it before the lease.
 const PROBLEMS = [
   ['Sleep', 'Their 6 a.m. alarm, your 2 a.m. bedtime.', 'bedtime'],
   ['Dishes', 'The sink that’s never empty.', 'dishes'],
   ['Guests', 'The partner who quietly moved in.', 'overnight'],
   ['Noise', 'Calls on speaker at midnight.', 'noise'],
-].map(([l, c, k]) => [l, c, QUICK.find(x => x.k === k)]);
+].map(([l, c, k]) => [l, c, Q[k]]);
 function Problem() {
   return <section style={{ ...wrap, padding: '112px 48px' }}>
     <Intro n="01" label="The problem" title="A bad roommate is a daily tax on your sleep, your kitchen and your peace." lead="Most roommate searches end with one DM vibe check and a 12-month lease. The mismatch shows up after move-in." />
@@ -119,12 +131,6 @@ function Neighborhoods({ stats, hoods, featured }) {
   </section>;
 }
 
-// What lib/scoring.ts does, in order. Keep in step with the engine.
-const SCORING = [
-  ['shield-check', 'Dealbreakers first', 'Smoking indoors, pets, budget or apartment size can rule someone out before any scoring.'],
-  ['sliders-horizontal', '10 habits, weighted', 'Your quick-tap answers, compared one by one. Bedtime and cleaning count most.'],
-  ['mic', 'Voice never moves it', 'Your interview only shapes the explanation.'],
-];
 function OptInFragment() {
   const [sam, setSam] = React.useState(false);
   const row = (i, name, yes, onClick) => <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '16px 0', borderBottom: '1px solid var(--border)' }}>
@@ -140,23 +146,27 @@ function OptInFragment() {
     <div style={{ marginTop: 12, fontSize: 12, color: 'var(--muted-foreground)' }}>Tap Sam’s status to preview.</div>
   </div>;
 }
-// Fragments take `ex`: the real engine's output for page.tsx's example pair (Kien, Sam).
+// Kien and Sam are sample-data.js profiles; every number is theirs, scored by lib/score.
+const ME_TAGS = tags(ME.answers);
 const TABS = [
-  { t: 'Math, not AI', d: 'Your match % is math. AI never sets it.', f: () => <div style={{ width: '100%', maxWidth: 460, borderTop: '1px solid var(--border)' }}>
-    {SCORING.map(([ic, t, d]) => <div key={t} style={{ display: 'flex', gap: 18, padding: '24px 0', borderBottom: '1px solid var(--border)' }}>
-      <span style={{ width: 44, height: 44, flex: 'none', borderRadius: 12, background: 'var(--sand)', color: 'var(--ink)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><LT.Icon name={ic} size={18} /></span>
-      <div>
-        <div style={{ fontSize: 18, fontWeight: 500, letterSpacing: '-0.01em', color: 'var(--ink)' }}>{t}</div>
-        <div style={{ marginTop: 4, fontSize: 14, lineHeight: 1.6, color: 'var(--muted-foreground)' }}>{d}</div>
+  { t: 'Math, not AI', d: `Your match % is the average agreement across your ${N} answers. AI never sets it.`, f: () => <div style={{ width: '100%', maxWidth: 460, display: 'grid', gap: 28 }}>
+    <div style={{ display: 'grid', justifyItems: 'start', gap: 16, fontFamily: 'var(--font-sans)' }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, color: 'var(--ink)', whiteSpace: 'nowrap' }}>
+        <span style={{ fontSize: 60, fontWeight: 500, lineHeight: 1, letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums' }}>{SAM.s + '%'}</span>
+        <span style={{ fontSize: 28, fontWeight: 500, lineHeight: 1, letterSpacing: '-0.02em' }}>Match</span>
       </div>
-    </div>)}
+      <LT.LinkUnderline size={13} href="#the-math">How it’s scored</LT.LinkUnderline>
+    </div>
+    <div style={{ display: 'grid', gap: 22 }}>
+      {['bedtime', 'noise', 'overnight'].map(k => bar(SAM.parts.find(p => p.k === k)))}
+    </div>
   </div> },
   // ContradictionCallout's look without its AI tag or Send button: the check is a keyword rule, and nothing is sent from here.
-  { t: 'Contradictions, quoted', d: 'When two answers disagree, we quote both and suggest a question. You decide whether to ask.', f: ({ flag }) => flag && <div style={{ width: '100%', maxWidth: 500, background: 'var(--sand)', borderRadius: 24, padding: 32 }}>
+  { t: 'Contradictions, quoted', d: 'When two answers disagree, we quote both and suggest a question. You decide whether to ask.', f: flag => flag && <div style={{ width: '100%', maxWidth: 500, background: 'var(--sand)', borderRadius: 24, padding: 32 }}>
     <LT.Eyebrow onSand>Worth asking</LT.Eyebrow>
-    <div style={{ marginTop: 22 }}>{[['Quick-tap · ' + QUICK.find(x => x.k === flag.key).label, flag.quick], ['Voice interview', flag.voice]].map(([s, q]) => <div key={s} style={{ padding: '16px 0', borderTop: '1px solid rgba(14,12,11,.1)' }}>
+    <div style={{ marginTop: 22 }}>{[['Quick-tap · ' + Q[flag.key].label, flag.quick + (Q[flag.key].suffix ?? '')], ['Voice interview', '“' + flag.voice + '”']].map(([s, q]) => <div key={s} style={{ padding: '16px 0', borderTop: '1px solid rgba(14,12,11,.1)' }}>
       <div style={{ fontSize: 12, color: 'var(--foreground)' }}>{s}</div>
-      <div style={{ marginTop: 6, fontSize: 18, fontWeight: 500, letterSpacing: '-0.01em', color: 'var(--ink)' }}>“{q}”</div>
+      <div style={{ marginTop: 6, fontSize: 18, fontWeight: 500, letterSpacing: '-0.01em', color: 'var(--ink)' }}>{q}</div>
     </div>)}</div>
     <div style={{ marginTop: 8, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 16.8, padding: '16px 18px' }}>
       <div style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>Suggested question</div>
@@ -164,21 +174,22 @@ const TABS = [
     </div>
   </div> },
   { t: 'Mutual opt-in', d: 'Nothing moves until you both say yes.', f: () => <OptInFragment /> },
-  { t: 'Fair housing by design', d: 'We match on habits, never on who you are. Profiles show initials, not faces.', f: ({ tags: [a, b] }) => <div style={{ width: '100%', maxWidth: 460, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, alignItems: 'start' }}>
-    {[['K', 'Kien', a, b], ['S', 'Sam', b, a]].map(([i, n, mine, theirs]) =>
+  { t: 'Fair housing by design', d: 'We match on habits, never on who you are. Profiles show initials, not faces.', f: () => <div style={{ width: '100%', maxWidth: 460, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, alignItems: 'start' }}>
+    {[['K', 'Kien', ME_TAGS, SAM.tags], ['S', 'Sam', SAM.tags, ME_TAGS]].map(([i, n, mine, theirs]) =>
       <div key={n} style={{ display: 'grid', gap: 14, justifyItems: 'start' }}>
         <LT.InitialsAvatar initials={i} size={72} />
         <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--ink)' }}>{n}</div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>{mine.map(l => <LT.HabitTag key={l} shared={theirs.includes(l)}>{l}</LT.HabitTag>)}</div>
       </div>)}
   </div> },
-  { t: 'Works with AI off', d: 'If the AI is down, matching still works.', f: ({ score, click, clash }) => <div style={{ width: '100%', maxWidth: 500, display: 'grid', gap: 24, justifyItems: 'start' }}>
+  // What an AI-off match card shows: the same %, and score.ts's rule-based reasons.
+  { t: 'Works with AI off', d: 'If the AI is down, matching still works.', f: () => <div style={{ width: '100%', maxWidth: 500, display: 'grid', gap: 24, justifyItems: 'start' }}>
     <LT.AIOffBadge />
-    {score != null && <LT.MatchScore value={score} showLink={false} />}
-    <LT.ClickClashList aiWritten={false} style={{ width: '100%' }} click={click} clash={clash} />
+    <LT.MatchScore value={SAM.s} showLink={false} />
+    <LT.ClickClashList aiWritten={false} style={{ width: '100%' }} click={SAM.click} clash={SAM.clash} />
   </div> },
 ];
-function TrustTabs({ ex }) {
+function TrustTabs({ flag }) {
   const [a, setA] = React.useState(0);
   const T = TABS[a];
   return <section id="safety" style={{ background: 'var(--ink)', color: '#fff', scrollMarginTop: 72 }}>
@@ -192,11 +203,12 @@ function TrustTabs({ ex }) {
               <h3 style={{ margin: '24px 0 0', fontSize: 26, fontWeight: 500, lineHeight: 1.2, letterSpacing: '-0.015em', textWrap: 'pretty' }}>{T.d}</h3>
               <div style={{ marginTop: 'auto', fontSize: 13, color: 'var(--muted-foreground)', fontVariantNumeric: 'tabular-nums' }}>{String(a + 1).padStart(2, '0')} / {String(TABS.length).padStart(2, '0')}</div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 0 }}>{T.f(ex)}</div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 0 }}>{T.f(flag)}</div>
           </div>
-          <div className="rm-on-dark" style={{ marginTop: 32, display: 'flex', gap: 12 }}>
+          <div className="rm-on-dark" style={{ marginTop: 32, display: 'flex', alignItems: 'center', gap: 12 }}>
             <LT.CircleIconButton onDark icon="arrow-left" label="Previous" disabled={a === 0} onClick={() => setA(Math.max(0, a - 1))} />
             <LT.CircleIconButton onDark icon="arrow-right" label="Next" disabled={a === TABS.length - 1} onClick={() => setA(Math.min(TABS.length - 1, a + 1))} />
+            <span style={{ marginLeft: 'auto', fontSize: 12, color: 'rgba(255,255,255,.6)' }}>Kien and Sam are sample profiles.</span>
           </div>
         </div>
         <nav className="rm-on-dark" style={{ gridColumn: 'span 3', display: 'grid', gap: 18, justifyItems: 'end' }}>
@@ -212,11 +224,96 @@ function HowItWorks() {
     <Intro n="04" label="How it works" title="From pre-screen to House Agreement" />
     <LT.Stepper style={{ marginTop: 80 }} steps={[
       { icon: 'sliders-horizontal', title: '30-second pre-screen', text: 'Budget, move-in, neighborhoods, dealbreakers.' },
-      { icon: 'mic', title: 'Tap, then talk', text: 'Ten habit questions, then talk for 90 seconds. Typing works too.' },
-      { icon: 'users', title: 'Meet your top 5', text: 'Every match % explained. A meetup opens only on a mutual yes.' },
+      { icon: 'mic', title: 'Tap, then talk', text: `${N} habit questions, then talk for 90 seconds. Typing works too.` },
+      { icon: 'users', title: 'Shortlist up to 5', text: 'Every match % explained. A meetup opens only on a mutual yes.' },
       { icon: 'file-text', title: 'House Agreement', text: 'Quiet hours, guests, chores and bills, agreed before the lease.' },
     ]} />
+    <ScoreMath />
   </section>;
+}
+
+// The match % explainer (Kien's). The steps, table and worked example render from lib/score and Sam's scored sample
+// profile, so they can't drift from the code.
+const H3 = { margin: 0, fontSize: 26, fontWeight: 500, lineHeight: 1.2, letterSpacing: '-0.015em', color: 'var(--ink)', textWrap: 'pretty' };
+const MUTED = { margin: 0, fontSize: 15, lineHeight: 1.625, color: 'var(--muted-foreground)' };
+const SUB = { marginTop: 6, fontSize: 12, lineHeight: 1.4, color: 'var(--muted-foreground)' };
+const TH = { padding: '0 24px 16px 0', textAlign: 'left', fontSize: 11, fontWeight: 500, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--muted-foreground)' };
+const TD = { padding: '24px 24px 24px 0', borderTop: '1px solid var(--border)', verticalAlign: 'top', fontSize: 15, lineHeight: 1.5, color: 'var(--ink)' };
+// Per kind: [unit, value shown for an answer, how the gap is measured, where agreement hits 0].
+const MEASURE = {
+  clock: f => ['clock time', hhmm, 'Hours apart on a 24-hour clock', f.full + ' h apart'],
+  ratio: f => [f.unit, String, 'Ratio of (1 + value)', 2 ** f.full + '× apart'],
+  linear: f => [f.unit, String, f.unit === 'dB' ? 'dB apart (approx.)' : f.unit.replace(/^./, c => c.toUpperCase()) + ' apart', f.full + ' ' + f.unit + ' apart'],
+  same: () => ['reports it or not', v => v ? 'Yes' : 'No', 'Same answer or not', 'None: a mismatch scores ' + HALF + '%'],
+};
+const COLS = Math.max(...QUESTIONS.map(f => f.opts.length)); // one value column per answer, aligned across rows
+const STEPS = [
+  ['Dealbreakers filter first', 'Checked both ways, before any scoring. “No smoking/vaping indoors” rules out anyone who smokes inside. A pet allergy, or needing a pet-free home, rules out anyone with a pet or planning one.'],
+  ['Each answer becomes a real quantity', <>Bedtimes become clock hours, guests become guests a month, noise becomes decibels. Then, per question:
+    <div style={{ margin: '16px 0', padding: '18px 22px', borderRadius: 12, background: 'var(--sand)', fontSize: 18, fontWeight: 500, letterSpacing: '-0.01em', color: 'var(--ink)' }}>agreement = max(0, 1 − gap ÷ full-clash gap)</div>
+    The same answer scores 100%; the full-clash gap or wider scores 0%. Rounded to a whole %.</>],
+  ['Your match % is the average', `The mean of the ${N} agreements, rounded. Every question counts the same: ${100 / N} points. AI never sets it, and voice answers don’t change it.`],
+];
+const NOTES = [
+  ['Counts use ratios', 'Never to once a month is a bigger change than 8 to 9 times a month.'],
+  [`Sleep clashes at ${Q.bedtime.full} hours`, `${Q.bedtime.full} hours apart puts one person’s wind-down or morning inside the other’s sleep.`],
+  ['Smoking skips a step', `“Sometimes inside” sits at ${Q.smoking.vals[SI]}, not ${SI}: crossing indoors counts double.`],
+  ['Sleep noise costs half', `Snoring or grinding can be medical, so a mismatch scores ${HALF}% and never rules anyone out.`],
+];
+function ScoreMath() {
+  const vs = SAM.parts.map(p => p.v), mean = vs.reduce((s, v) => s + v, 0) / vs.length;
+  return <div id="the-math" style={{ marginTop: 112, paddingTop: 72, borderTop: '1px solid var(--border)', scrollMarginTop: 96, display: 'grid', gridTemplateColumns: 'repeat(12,minmax(0,1fr))', columnGap: 48, rowGap: 96 }}>
+    <div style={{ gridColumn: 'span 4' }}>
+      <LT.Eyebrow>The math</LT.Eyebrow>
+      <h3 style={{ ...H3, margin: '24px 0 0', fontSize: 44, lineHeight: 1.08, letterSpacing: '-0.025em' }}>How your match % is calculated</h3>
+      <p style={{ ...MUTED, marginTop: 24 }}>Three steps, the same for everyone. The table is read straight from the scoring code.</p>
+    </div>
+    <ol style={{ gridColumn: '6 / span 7', margin: 0, padding: 0, listStyle: 'none', borderBottom: '1px solid var(--border)' }}>
+      {STEPS.map(([t, body], i) => <li key={t} style={{ display: 'grid', gridTemplateColumns: '56px minmax(0,1fr)', padding: '32px 0', borderTop: '1px solid var(--border)' }}>
+        <span style={{ paddingTop: 4, fontSize: 13, fontWeight: 500, color: 'var(--brand)', fontVariantNumeric: 'tabular-nums' }}>{String(i + 1).padStart(2, '0')}</span>
+        <div>
+          <div style={{ fontSize: 18, fontWeight: 500, letterSpacing: '-0.01em', color: 'var(--ink)' }}>{t}</div>
+          <div style={{ ...MUTED, marginTop: 10 }}>{body}</div>
+        </div>
+      </li>)}
+    </ol>
+
+    <div style={{ gridColumn: 'span 12' }}>
+      <h3 style={H3}>The {N} questions, in real units</h3>
+      <table style={{ marginTop: 40, width: '100%', borderCollapse: 'collapse', fontVariantNumeric: 'tabular-nums' }}>
+        <thead><tr>{[['Question', '17%'], ['Value per answer', '49%'], ['Gap', '19%'], ['Full-clash gap', '15%']].map(([h, w]) => <th key={h} style={{ ...TH, width: w }}>{h}</th>)}</tr></thead>
+        <tbody>{QUESTIONS.map(f => { const [unit, val, gap, zero] = MEASURE[f.kind](f); return <tr key={f.k}>
+          <td style={TD}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontWeight: 500 }}><LT.Icon name={f.icon} size={15} />{f.label}</span><div style={{ ...SUB, paddingLeft: 23 }}>{unit}</div></td>
+          <td style={TD}><div style={{ display: 'grid', gridTemplateColumns: `repeat(${COLS},minmax(0,1fr))`, columnGap: 16 }}>
+            {f.opts.map((o, i) => <div key={o}><div>{val(f.vals[i])}</div><div style={SUB}>{o}</div></div>)}
+          </div></td>
+          <td style={TD}>{gap}</td>
+          <td style={TD}>{zero}</td>
+        </tr>; })}</tbody>
+      </table>
+    </div>
+
+    {NOTES.map(([t, d]) => <div key={t} style={{ gridColumn: 'span 3', borderTop: '1px solid var(--border)', paddingTop: 20 }}>
+      <div style={{ fontSize: 15, fontWeight: 500, letterSpacing: '-0.01em', color: 'var(--ink)' }}>{t}</div>
+      <p style={{ margin: '8px 0 0', fontSize: 14, lineHeight: 1.6, color: 'var(--muted-foreground)' }}>{d}</p>
+    </div>)}
+
+    <div style={{ gridColumn: 'span 12', background: 'var(--card)', borderRadius: 24, padding: 48, display: 'grid', gridTemplateColumns: 'repeat(12,minmax(0,1fr))', columnGap: 48, rowGap: 48 }}>
+      <div style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+        <LT.Eyebrow>Worked example</LT.Eyebrow>
+        <h3 style={{ ...H3, marginTop: 24 }}>You and {SAM.n}</h3>
+        <p style={{ ...MUTED, marginTop: 12 }}>“You” is {ME.n}. Both are sample profiles, scored by the app’s own code.</p>
+        <LT.MatchScore value={SAM.s} showLink={false} style={{ marginTop: 'auto', paddingTop: 32 }} />
+      </div>
+      <div style={{ gridColumn: '6 / span 7', display: 'grid', gridTemplateRows: `repeat(${Math.ceil(vs.length / 2)},auto)`, gridAutoFlow: 'column', gridAutoColumns: 'minmax(0,1fr)', columnGap: 40, rowGap: 24 }}>
+        {SAM.parts.map(bar)}
+      </div>
+      <div style={{ gridColumn: 'span 12', padding: '20px 24px', borderRadius: 12, background: 'var(--sand)', display: 'flex', alignItems: 'baseline', gap: 24, fontSize: 15, color: 'var(--ink)', fontVariantNumeric: 'tabular-nums' }}>
+        <span style={{ fontSize: 13, color: 'var(--foreground)', whiteSpace: 'nowrap' }}>Match %</span>
+        <span>{`(${vs.join(' + ')}) ÷ ${vs.length} = ${+mean.toFixed(2)} → `}<span style={{ fontWeight: 500 }}>{SAM.s + '%'}</span></span>
+      </div>
+    </div>
+  </div>;
 }
 
 function BrandStatement() {
@@ -238,7 +335,12 @@ function FAQ() {
       </div>
       <div style={{ gridColumn: '5 / span 8' }}>
         <LT.Accordion defaultOpen={0} items={[
-          { q: 'Is my match % made by AI?', a: 'No. Dealbreakers filter first, then a weighted comparison of your 10 quick-tap answers, where bedtime and cleaning count most. Voice answers never change the score.' },
+          { q: 'Is my match % made by AI?', a: `No. It’s plain math on your ${N} quick-tap answers, the same with AI on or off. Voice answers never change it.` },
+          { q: 'How is my match % calculated?', a: <>Each answer becomes a real quantity: clock hours, times a week, decibels. On each question, agreement is 100% when you match and falls in a straight line to 0% at that question’s full-clash gap. Your match % is the average of the {N}, and every question counts the same.
+            <div style={{ marginTop: 16 }}><LT.LinkUnderline size={13} href="#the-math">See the table and a worked example</LT.LinkUnderline></div></> },
+          { q: 'Why compare guests and cleaning by ratio?', a: `Going from no guests to one or two a month changes a home more than going from eight to nine, so counts are compared by ratio (a log scale), not by difference. Guests ${G[0]} vs ${G[1]} a month scores ${guests(0, 1)}%; ${G[3]} vs ${G[4].toLowerCase()} scores ${guests(3, 4)}%.` },
+          { q: 'What do dealbreakers do?', a: 'They filter people out before any scoring, both ways. “No smoking/vaping indoors” rules out smoking sometimes or often inside. A pet allergy, or needing a pet-free home, rules out having a pet or planning to get one. Filtered people never appear, so no other answer can outweigh a dealbreaker.' },
+          { q: 'Why does sleep noise only cost half?', a: `Snoring or grinding can be medical, so we never rule anyone out for it. If only one of you reports sleep noise, that question scores ${HALF}%, not 0%.` },
           { q: 'Why can’t I see photos of people?', a: 'Profiles show initials, not faces, so matches stay about habits.' },
           { q: 'Where do the listings come from?', a: 'Public Zillow listings, linked back to the source with the date we saw them.' },
           { q: 'What if the AI gets something wrong?', a: 'AI only writes the wording on a match card, and that text is always labeled. The score and the questions worth asking come from fixed rules, so everything works with AI off.' },
@@ -281,7 +383,7 @@ function LandingFooter() {
     legal="© 2026 RoomMe · Listings come from public sources and link back to the original. RoomMe is not a broker." />;
 }
 
-export default function LandingScreen({ stats, hoods, featured, example }) {
+export default function LandingScreen({ stats, hoods, featured, flag }) {
   const [scrolled, setScrolled] = React.useState(false);
   const [active, setActive] = React.useState(undefined);
   React.useEffect(() => {
@@ -299,7 +401,7 @@ export default function LandingScreen({ stats, hoods, featured, example }) {
     <TrustStrip stats={stats} />
     <Problem />
     <Neighborhoods stats={stats} hoods={hoods} featured={featured} />
-    <TrustTabs ex={example} />
+    <TrustTabs flag={flag} />
     <HowItWorks />
     <BrandStatement />
     <FAQ />

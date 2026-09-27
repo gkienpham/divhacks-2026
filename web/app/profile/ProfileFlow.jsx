@@ -3,11 +3,11 @@
 // Saves as it goes (POST /api/profile): 3A on Continue, 3B on each answer, the transcript only from 3D, after review.
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { QUICK } from '@/lib/questions';
+import { QUICK, answered } from '@/lib/questions';
 import { SeeScreen, QuickTapScreen } from './HabitScreens';
 import { VoiceScreen, ReviewScreen, FULL } from './VoiceScreens';
 
-// What /api/profile accepts: sleepNoiseOther only with "Other" picked, and no empty multi answer (missing = skipped).
+// What /api/profile accepts: sleepNoiseOther only with "Other" picked, and no empty multi answer (missing = not answered yet).
 function clean({ sleepNoiseOther, ...q }) {
   if (q.sleepNoise && !q.sleepNoise.length) delete q.sleepNoise;
   const other = sleepNoiseOther?.trim();
@@ -15,12 +15,12 @@ function clean({ sleepNoiseOther, ...q }) {
 }
 const post = body => fetch('/api/profile', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
   .then(r => r.ok, () => false);
-const gap = quick => QUICK.findIndex(q => !(q.k in quick));
+const gap = quick => QUICK.findIndex(q => !answered(q, quick[q.k])); // first unanswered question, or -1
 
 // see/quick/transcript: the saved profile. A returning user picks up at the first thing missing, or at the top once done.
 export default function ProfileFlow({ ai, see: savedSee, quick: savedQuick, transcript: savedTranscript }) {
   const router = useRouter();
-  const [step, setStep] = React.useState(() => savedTranscript || !savedSee ? 'see' : gap(savedQuick) < 0 ? 'voice' : 'quick'); // see | quick | voice | review
+  const [step, setStep] = React.useState(() => !savedSee ? 'see' : gap(savedQuick) >= 0 ? 'quick' : savedTranscript ? 'see' : 'voice'); // see | quick | voice | review
   const [qi, setQi] = React.useState(() => Math.max(0, gap(savedQuick)));
   const [see, setSee] = React.useState(savedSee);
   const [answers, setAnswers] = React.useState(savedQuick);
@@ -48,7 +48,7 @@ export default function ProfileFlow({ ai, see: savedSee, quick: savedQuick, tran
   if (step === 'see') return <SeeScreen value={see} onChange={setSee} frame={frame} onNext={() => { save({ see }); setQi(0); setStep('quick'); }} />;
   if (step === 'quick') {
     const { k, multi } = QUICK[qi];
-    // Single-choice answers save on tap (then auto-advance); multi-choice and its "Other" text save on Continue or Skip.
+    // Single-choice answers save on tap (then auto-advance); multi-choice and its "Other" text save on Continue.
     return <QuickTapScreen v={qi} sel={answers[k]} other={answers.sleepNoiseOther} frame={frame}
       onAnswer={a => { const next = { ...answers, [k]: a }; setAnswers(next); if (!multi) save({ quick: clean(next) }); }}
       onOther={t => setAnswers(s => ({ ...s, sleepNoiseOther: t }))}

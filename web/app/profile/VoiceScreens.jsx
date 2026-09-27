@@ -16,7 +16,8 @@ const BARS = Array.from({ length: 36 }, (_, i) => 6 + Math.round(Math.abs(Math.s
 const KEYFRAMES = '@keyframes rm-wave{from{transform:scaleY(.35)}to{transform:scaleY(1)}}';
 const LINE = '1px solid rgba(255,255,255,.12)';
 
-// Voice only when /api/voice/session hands out a signed URL (ELEVENLABS_API_KEY + ELEVENLABS_AGENT_ID); typing otherwise.
+// Voice only when /api/voice/session hands out a signed URL (ELEVENLABS_API_KEY + ELEVENLABS_AGENT_ID). Typing otherwise:
+// { configured: false } (any status), an error body, or no network.
 // Only the user's own lines are kept. Nothing is saved here: onDone(text, 'voice' | 'typed' | 'sample') hands it to 3D.
 export function VoiceScreen({ initial, sample: wasSample, onDone, frame }) {
   const [url, setUrl] = React.useState(); // undefined while checking, null = typing only
@@ -33,7 +34,7 @@ export function VoiceScreen({ initial, sample: wasSample, onDone, frame }) {
 
   React.useEffect(() => {
     let on = true;
-    fetch('/api/voice/session', { cache: 'no-store' }).then(r => r.ok ? r.json() : null)
+    fetch('/api/voice/session', { cache: 'no-store' }).then(r => r.json())
       .then(d => on && setUrl(d?.signedUrl || null), () => on && setUrl(null));
     return () => { on = false; stop.current?.(); };
   }, []);
@@ -165,7 +166,7 @@ export function ReviewScreen({ ai, quick, transcript, sample, voiced, onEdit, on
           <VX.FormCard padding={28}>
             <VX.Field as="textarea" label={label} hint="· edit freely" rows={15} value={transcript} onChange={e => onEdit(e.target.value.slice(0, MAX))} />
           </VX.FormCard>
-          <p style={{ margin: '20px 0 0', fontSize: 14, color: 'var(--muted-foreground)' }}>Voice answers never change your match %, only the explanations.</p>
+          <p style={{ margin: '20px 0 0', fontSize: 14, color: 'var(--muted-foreground)' }}>Voice answers never change your match %.</p>
           <div style={{ marginTop: 24, display: 'flex', alignItems: 'center', gap: voiced ? 12 : 28 }}>
             <VX.ButtonInk size="lg" onClick={onSave}>Save my profile</VX.ButtonInk>
             {voiced ? <VX.ButtonOutline size="lg" arrow={false} icon="mic" onClick={onBack}>Re-record</VX.ButtonOutline>

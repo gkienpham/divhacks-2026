@@ -1,5 +1,5 @@
-// The question set, shared by the screens (client) and the scoring engine (server).
-// Option order is meaningful: single-choice lists run low → high, and scoring reads the index as an ordinal scale.
+// The question set, shared by the screens (client) and the server. The 10 quick-tap questions come from lib/score.ts.
+import { QUESTIONS, type Question } from "./score";
 
 // Per-person monthly rent bands. Same bounds on /start, /listings and in scoring. max null = no cap.
 export const BUDGETS = [
@@ -41,22 +41,16 @@ export interface Prescreen {
 export const SEE_PREFS = ["overlap", "opposite", "auto"] as const;
 export type SeePref = (typeof SEE_PREFS)[number];
 
-// 3B, the 10 quick-tap answers (docs/PROJECT.md §5). `label`/`icon` feed HabitBar on the match card.
-export const QUICK = [
-  { k: "bedtime", label: "Bedtime", icon: "moon", q: "What time do you actually go to bed on weeknights?", opts: ["Before 22:00", "22:00–23:00", "23:00–00:00", "00:00–01:00", "After 01:00"] },
-  { k: "wake", label: "Wake time", icon: "sunrise", q: "What time do you usually get up on weekdays?", opts: ["Before 06:00", "06:00–07:00", "07:00–08:00", "08:00–09:00", "After 09:00"] },
-  { k: "cleaning", label: "Cleaning", icon: "spray-can", q: "How many times a week do you clean shared spaces?", opts: ["0", "1", "2", "3–4", "5 or more"] },
-  { k: "dishes", label: "Dishes", icon: "utensils", q: "When do your dishes usually get washed?", opts: ["Right after eating", "The same day", "The next day", "When the sink is full"] },
-  { k: "guests", label: "Guests", icon: "users", q: "How many guests do you have per month?", opts: ["0", "1–2", "3–5", "6–10", "More than 10"] },
-  { k: "overnight", label: "Overnight guests", icon: "bed-double", q: "How often does someone stay the night?", opts: ["Never", "1–2 nights a month", "About once a week", "2 or more nights a week"] },
-  { k: "sleepNoise", label: "Sleep noise", icon: "volume-2", q: "Has anyone told you that you make noise in your sleep?", multi: true, opts: ["I snore", "I grind my teeth", "I talk or move in my sleep", "No one’s mentioned it", "Not sure", "Other"] },
-  { k: "noise", label: "Noise", icon: "music", q: "How loud is your home on a weeknight?", opts: ["Silent", "Quiet talking", "Music or TV, low", "Music or TV, out loud"] },
-  { k: "wfh", label: "Work from home", icon: "house", q: "How many days a week do you work from home?", opts: ["0", "1–2", "3–4", "5 or more"] },
-  { k: "smoking", label: "Smoking", icon: "cigarette", q: "Do you smoke or use cannabis at home?", opts: ["Never", "Outside only", "Sometimes inside", "Often inside"] },
-] as const;
-export type QuickKey = (typeof QUICK)[number]["k"];
-// Single-choice keys hold one option string; sleepNoise holds a list. A missing key = skipped.
+// 3B, the 10 quick-tap answers: lib/score.ts owns the list (question, options, bar label and icon) and scores it.
+// A missing key = not answered yet. Every answer must be one of opts (score.ts throws otherwise), so there is no Skip.
+export type QuickKey = 'bedtime' | 'wake' | 'cleaning' | 'dishes' | 'guests' | 'overnight' | 'sleepNoise' | 'noise' | 'wfh' | 'smoking';
+export const QUICK = QUESTIONS as (Question & { k: QuickKey })[];
 export type QuickAnswers = Partial<Record<QuickKey, string | string[]>> & { sleepNoiseOther?: string };
+// A valid answer to one question: an option, or for a multi-select a non-empty list of options.
+export const answered = (q: Question, v: unknown): boolean =>
+  q.multi ? Array.isArray(v) && v.length > 0 && v.every((x) => q.opts.includes(x)) : typeof v === 'string' && q.opts.includes(v);
+// All 10 answered validly: the only profiles score.ts ranks.
+export const complete = (quick: QuickAnswers | null | undefined) => !!quick && QUICK.every((q) => answered(q, quick[q.k]));
 
 // 3C, the 5 open prompts for the voice interview (or typed answers).
 export const VOICE_PROMPTS = ["A perfect Sunday at home", "A roommate habit that drives you crazy", "How you bring up a problem", "Your typical weekday", "Social hub or quiet recharge?"] as const;

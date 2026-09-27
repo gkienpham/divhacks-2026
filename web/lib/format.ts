@@ -1,8 +1,8 @@
 // Shared by server pages and client screens. Fixed time zones so SSR and hydration agree.
 export const usd = (n: number) => "$" + Math.round(n).toLocaleString("en-US");
 
-export const seenOn = (iso: string) =>
-  new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "America/New_York" });
+export const seenOn = (iso: string) => // non-breaking space: "Sep 26" never splits across lines
+  new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "America/New_York" }).replace(" ", "\u00a0");
 
 // 'YYYY-MM-DD' (a calendar date, no time zone) → "Oct 15"
 export const day = (ymd: string) =>
@@ -21,3 +21,8 @@ export const money = (usdAmount: number, cur = "USD") =>
   cur === "USD"
     ? usd(usdAmount)
     : new Intl.NumberFormat("en-US", { style: "currency", currency: cur, maximumFractionDigits: 0 }).format(usdAmount * RATES[cur]);
+
+// score.ts answer text for HabitBar's "You {you} · {name} {them}": lowercase the first letter (not the pronoun "I"),
+// and glue en dashes with word joiners so "23:00–00:00" or "1–2/month" never wraps mid-range.
+export const said = (s: string) =>
+  s.split(", ").map((x) => (/^I\b/.test(x) ? x : x.charAt(0).toLowerCase() + x.slice(1))).join(", ").replace(/–/g, "\u2060–\u2060");

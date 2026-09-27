@@ -1,9 +1,42 @@
 "use client";
-// Pieces the mutual/agreement/locked kits shared through Babel globals (MutualScreens defined them).
+// Pieces the mutual/agreement/locked kits shared through Babel globals (MutualScreens defined them),
+// plus the score pieces the swipe card and the match detail share.
 import React from 'react';
 import * as MU from '@/components/rm';
 import { NAV } from '@/components/shared';
-import { usd, day, street, bedsLabel } from '@/lib/format';
+import { QUICK } from '@/lib/questions';
+import { usd, day, street, bedsLabel, said } from '@/lib/format';
+
+// What lib/score.ts does, in a few words. The full math is on the landing (/#the-math).
+const N = QUICK.length;
+export const HOW_SCORED = `Dealbreakers filter first, both ways. Then your ${N} answers are compared in real units (hours, times a week, decibels). Your match % is the average of the ${N} agreements, each counting equally. AI and voice answers never change it.`;
+
+// Display only: "You the same day · Sam right after eating". Each option's first letter drops to lowercase, except the pronoun I.
+// All of m.bars (score.ts parts, question order), two per row, every row one height.
+export const Bars = ({ m, rowGap = 22 }) => <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gridAutoRows: '1fr', columnGap: 32, rowGap }}>
+  {m.bars.map(b => <MU.HabitBar key={b.k} label={b.label} icon={b.icon} value={b.v} you={said(b.you)} them={said(b.them)} themName={m.other.name} />)}
+</div>;
+
+// clickClash can return no exact matches or no gaps under 75%, and ClickClashList always draws both headings.
+// So a side with nothing to list says so in one quiet line, in ClickClashList's own layout.
+export function Reasons({ m }) {
+  if (m.click.length && m.clash.length) return <MU.ClickClashList aiWritten={m.ai} click={m.click} clash={m.clash} />;
+  const col = (head, lines, mark, none) => <div>
+    <div style={{ fontSize: 18, fontWeight: 500, letterSpacing: '-0.01em', color: 'var(--ink)' }}>{head}</div>
+    <ul style={{ listStyle: 'none', margin: '16px 0 0', padding: 0 }}>
+      {lines.length ? lines.map((c, i) => <li key={i} style={{ display: 'flex', gap: 12, padding: '14px 0', borderTop: '1px solid var(--border)', fontSize: 14, lineHeight: 1.55, color: 'var(--foreground)' }}>
+        <span style={{ width: 16, flex: 'none', display: 'flex', justifyContent: 'center', paddingTop: 3 }}>{mark}</span><span>{c}</span>
+      </li>) : <li style={{ padding: '14px 0', borderTop: '1px solid var(--border)', fontSize: 14, lineHeight: 1.55, color: 'var(--muted-foreground)' }}>{none}</li>}
+    </ul>
+  </div>;
+  return <div>
+    {m.ai && <MU.AISummaryTag style={{ marginBottom: 18 }} />}
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 48 }}>
+      {col("You'll click", m.click, <MU.Icon name="check" size={15} color="var(--ink)" />, 'No exact matches')}
+      {col("You'll clash", m.clash, <span aria-hidden="true" style={{ width: 7, height: 7, marginTop: 4, borderRadius: 9999, background: 'var(--watch)' }} />, 'No big gaps')}
+    </div>
+  </div>;
+}
 
 export const MFrame = ({ me, children = null, h = 900 }) => <div style={{ width: 1440, minHeight: h, margin: '0 auto', background: 'var(--background)', fontFamily: 'var(--font-sans)', display: 'flex', flexDirection: 'column' }}>
   <MU.Header variant="light" brand={<MU.Wordmark />} items={NAV} active="Matches" showSearch={false} showCta={false} right={<MU.InitialsAvatar initials={me.initials} name={me.name} size={36} />} />

@@ -19,7 +19,7 @@ const Empty = p => <div style={{ marginTop: 56, display: 'grid' }}><EmptyState i
 function GridView({ ms, act, full }) {
   const href = useMatchHref();
   return <div style={{ marginTop: 56, display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 16 }}>
-    {ms.map((m, i) => { const on = m.likedByMe; return <article key={m.id} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 24, padding: 24, display: 'flex', flexDirection: 'column' }}>
+    {ms.map((m, i) => { const on = m.likedByMe, reason = m.click.slice(0, 2).join(' · '); return <article key={m.id} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 24, padding: 24, display: 'flex', flexDirection: 'column' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
         <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.18em', color: 'var(--brand)', fontVariantNumeric: 'tabular-nums', paddingTop: 4, width: 22 }}>{String(i + 1).padStart(2, '0')}</span>
         <MG.InitialsAvatar initials={m.other.initials} name={m.other.name} size={48} />
@@ -29,8 +29,8 @@ function GridView({ ms, act, full }) {
         </div>
         <MG.MatchScore value={m.score} showLink={false} style={{ zoom: 44 / 60, textAlign: 'right' }} />
       </div>
-      <div style={{ marginTop: 20, display: 'flex', flexWrap: 'wrap', gap: 6 }}>{m.other.tags.map((t, j) => <MG.HabitTag key={j}>{t}</MG.HabitTag>)}</div>
-      <p style={{ margin: '16px 0 0', fontSize: 14, lineHeight: 1.6, color: 'var(--muted-foreground)' }}>{m.ai && <MG.AISummaryTag style={{ marginRight: 8 }} />}{m.click.slice(0, 2).join(' · ')}</p>
+      {m.other.tags.length > 0 && <div style={{ marginTop: 20, display: 'flex', flexWrap: 'wrap', gap: 6 }}>{m.other.tags.map(t => <MG.HabitTag key={t}>{t}</MG.HabitTag>)}</div>}
+      {reason && <p style={{ margin: '16px 0 0', fontSize: 14, lineHeight: 1.6, color: 'var(--muted-foreground)' }}>{m.ai && <MG.AISummaryTag style={{ marginRight: 8 }} />}{reason}</p>}
       <div style={{ marginTop: 'auto', paddingTop: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
         {m.mutual ? <MG.ButtonInk size="sm" href={href(m.id)}>It’s mutual</MG.ButtonInk>
           : <MG.ButtonOutline size="sm" arrow={!on && !full} icon={on ? 'check' : undefined} disabled={!on && full} onClick={() => act(m, on ? 'unlike' : 'like')}>{on ? 'Shortlisted' : full ? 'Shortlist full' : 'Shortlist'}</MG.ButtonOutline>}

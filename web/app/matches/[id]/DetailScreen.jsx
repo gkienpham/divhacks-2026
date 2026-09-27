@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import * as MD from '@/components/rm';
 import { ListingCard } from '@/components/shared';
-import { MFrame, MH2, SampleNote, usePair, ErrorLine } from './parts';
+import { MFrame, MH2, SampleNote, usePair, ErrorLine, Bars, Reasons, HOW_SCORED } from './parts';
 
 const grid = { display: 'grid', gridTemplateColumns: 'repeat(12,minmax(0,1fr))' };
 
@@ -46,7 +46,7 @@ export default function DetailScreen({ me, m: initial, aiOff }) {
       </div>
       <div style={{ gridColumn: '9 / span 4', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 28, padding: 36 }}>
         <MD.MatchScore value={m.score} onHowScored={() => setHow(h => !h)} linkLabel={how ? 'Hide scoring' : 'How it’s scored'} />
-        {how && <div style={{ marginTop: 20, background: 'var(--sand)', borderRadius: 16.8, padding: 18, fontSize: 13, lineHeight: 1.6, color: 'var(--foreground)' }}>Dealbreakers filter first. Then your quick answers are compared habit by habit, with fixed weights; bedtime and cleaning count most. Same answers, same number.</div>}
+        {how && <div style={{ marginTop: 20, background: 'var(--sand)', borderRadius: 16.8, padding: 18, fontSize: 13, lineHeight: 1.6, color: 'var(--foreground)' }}>{HOW_SCORED}<div style={{ marginTop: 12 }}><MD.LinkUnderline href="/#the-math" size={13}>See the table and a worked example</MD.LinkUnderline></div></div>}
         <div style={{ marginTop: 28, paddingTop: 28, borderTop: '1px solid var(--border)' }}>
           {m.passedByMe ? chosen('Passed', 'Shortlist instead', 'like')
             : m.likedByMe ? chosen(`Shortlisted. ${p.name} hasn’t said yes.`, 'Remove', 'unlike')
@@ -63,8 +63,8 @@ export default function DetailScreen({ me, m: initial, aiOff }) {
       <MD.SectionLabel number="01">Side by side</MD.SectionLabel>
       <MH2 style={{ marginTop: 22 }}>Where you line up</MH2>
       <div style={{ marginTop: 48, ...grid, gap: 16 }}>
-        <MD.FormCard style={{ gridColumn: 'span 5' }} padding={36}><div style={{ display: 'grid', gap: 28 }}>{m.bars.map(b => <MD.HabitBar key={b.key} label={b.label} icon={b.icon} value={Math.round(b.similarity * 100)} you={b.a} them={b.b} themName={p.name} />)}</div></MD.FormCard>
-        <MD.FormCard style={{ gridColumn: 'span 7' }} padding={36}><MD.ClickClashList aiWritten={m.ai} click={m.click} clash={m.clash} /></MD.FormCard>
+        <MD.FormCard style={{ gridColumn: 'span 7' }} padding={36}><Bars m={m} rowGap={28} /></MD.FormCard>
+        <MD.FormCard style={{ gridColumn: 'span 5' }} padding={36}><Reasons m={m} /></MD.FormCard>
       </div>
     </section>
 

@@ -9,7 +9,8 @@ import { actOnMatch, getMatch, getTopMatches, LIKE_BACK, MatchError } from './ma
 import { deleteProfile, getMe, saveProfile, setSaved } from './profiles';
 import { PRESCREEN, QUICK, type Prescreen, type QuickAnswers } from './questions';
 
-const quick: QuickAnswers = Object.fromEntries(QUICK.map((q) => [q.k, 'multi' in q && q.multi ? [q.opts[3]] : q.opts[1]]));
+// All 10 answered (lib/score.ts needs a complete set): option 1 everywhere, sleep noise "No one's mentioned it".
+const quick: QuickAnswers = Object.fromEntries(QUICK.map((q) => [q.k, q.multi ? [q.opts[3]] : q.opts[1]]));
 const prescreen: Prescreen = { answers: Object.fromEntries(PRESCREEN.map((g) => [g.id, [...g.def]])) as Prescreen['answers'], dealbreakers: [] };
 const create = (name: string, synthetic = false) =>
   query<{ id: number }>(`insert into profiles (name, session_token, is_synthetic) values ($1, $2, $3) returning id::int as id`, [name, randomUUID(), synthetic]).then((r) => r[0].id);
@@ -24,7 +25,8 @@ async function main() {
     // Profile: prescreen + quick + a transcript that contradicts the quick answer on guests.
     let me = await saveProfile(meId, { name: 'Kien', prescreen, quick, see: 'auto', transcript: 'Honestly I have friends over most nights and we stay up late.' });
     assert.equal(me.initials, 'K');
-    assert.ok(me.complete && me.prescreen && me.signals.tags.length === 3);
+    assert.ok(me.complete && me.prescreen && me.signals.tags.length > 0 && me.signals.tags.length <= 3);
+    assert.equal(me.email, null);
     console.log('tags', me.signals.tags, 'contradictions', me.signals.contradictions.length);
     assert.deepEqual(await setSaved(meId, listing.zpid, true), [listing.zpid]);
     const [flat] = await query<{ budget_max: number; move_in: string; lease_months: number; neighborhoods: string[] }>(
@@ -44,14 +46,19 @@ async function main() {
     assert.ok(top.every((m, i) => i === 0 || top[i - 1].score >= m.score), 'sorted by score');
     for (const m of top) {
       assert.ok(Number.isInteger(m.score) && m.score >= 0 && m.score <= 100);
-      assert.ok(m.other.name && m.other.initials && typeof m.other.synthetic === 'boolean' && m.other.tags.length === 3);
-      assert.ok(m.bars.length <= 6 && m.click.length === 3 && m.clash.length <= 2 && m.ai === false && m.summary === null);
+      assert.ok(m.other.name && m.other.initials && typeof m.other.synthetic === 'boolean' && m.other.tags.length <= 3);
+      // score.ts contract: all 10 bars in QUESTIONS order, % = the rounded mean of the bars, rule-based click/clash.
+      assert.deepEqual(m.bars.map((b) => b.k), QUICK.map((q) => q.k));
+      assert.equal(m.score, Math.round(m.bars.reduce((s, b) => s + b.v, 0) / 10));
+      assert.ok(m.click.length <= 3 && m.clash.length <= 2 && m.ai === false && m.summary === null);
       assert.ok(m.saved.length <= 4 && m.savedOverlap <= m.saved.length);
       assert.ok(!('phone' in m.other));
     }
     const mine = top.find((m) => m.other.id === themId)!;
     assert.ok(mine, 'the identical partner is in the top 20');
-    assert.ok(mine.score >= LIKE_BACK && mine.status === 'suggested' && !mine.mutual && mine.agreement === null);
+    assert.ok(mine.score === 100 && mine.score >= LIKE_BACK && mine.status === 'suggested' && !mine.mutual && mine.agreement === null);
+    assert.deepEqual(mine.clash, []);
+    assert.equal(mine.click.length, 3);
     assert.equal(mine.savedOverlap, 1);
     assert.equal(mine.listing?.zpid, listing.zpid);
     assert.ok(mine.other.meta.includes(listing.neighborhood) && mine.other.meta.includes('$1,500–2,000') && mine.other.meta.includes('Move-in'));

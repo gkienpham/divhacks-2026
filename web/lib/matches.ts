@@ -2,11 +2,11 @@ import 'server-only';
 import { query } from './db';
 import { aiOn, matchCard, type AiCard } from './ai';
 import { usd } from './format';
-import { getListingsByIds, listListings, type Listing } from './listings';
+import { getListing, getListingsByIds, listListings, type Listing } from './listings';
 import { initials, type Signals } from './profiles';
-import { BUDGETS, type Prescreen, type QuickAnswers, type SeePref } from './questions';
-import { rank, scorePair, type HabitScore, type Person } from './scoring';
-import { contradictions, draftAgreement, explain, tags, type Contradiction } from './signals';
+import { BUDGETS, complete, type Prescreen, type QuickAnswers, type SeePref } from './questions';
+import { clickClash, rank, score, tags, type Answers, type Part, type Person } from './score';
+import { contradictions, draftAgreement, type Contradiction } from './signals';
 
 export type Status = 'suggested' | 'shortlisted' | 'mutual' | 'met' | 'locked' | 'closed';
 export type Action = 'like' | 'unlike' | 'pass' | 'meetup' | 'agreement' | 'confirm' | 'simulate-confirm' | 'lock';
@@ -23,10 +23,10 @@ export interface MatchView {
   mutual: boolean;
   likedByMe: boolean;
   passedByMe: boolean;
-  other: { id: number; name: string; initials: string; synthetic: boolean; meta: string; tags: string[] };
-  bars: HabitScore[]; // top 6 by weight
-  click: string[];
-  clash: string[];
+  other: { id: number; name: string; initials: string; synthetic: boolean; meta: string; tags: string[] /* score.ts tags(), ≤ 3 */ };
+  bars: Part[]; // all 10, in score.ts QUESTIONS order; v = 0..100 agreement
+  click: string[]; // 0–3 lines (score.ts clickClash, or Gemini when ai)
+  clash: string[]; // 0–2 lines
   summary: string | null;
   ai: boolean; // click/clash/summary written by Gemini
   contradiction: Contradiction | null; // on the other person
@@ -52,7 +52,7 @@ interface P {
   transcript: string | null; saved: string[]; signals: Partial<Signals> | null; neighborhoods: string[]; budget_max: number | null; move_in: string | null;
 }
 interface M {
-  id: number; a: number; b: number; score: number; reasons: { habits?: HabitScore[]; ai?: Record<string, AiCard> }; status: Status;
+  id: number; a: number; b: number; score: number; reasons: { parts?: Part[]; ai?: Record<string, AiCard> }; status: Status;
   listing: string | null; liked_by: number[]; passed_by: number[]; meetup: Meetup | null; agreement: Agreement | null;
 }
 // Never selects phone.
@@ -61,9 +61,11 @@ const P_SQL = `select id::int as id, name, is_synthetic as synthetic, prescreen,
 const M_COLS = `id::int as id, profile_a::int as a, profile_b::int as b, score::int as score, reasons, status, listing,
   liked_by::int[] as liked_by, passed_by::int[] as passed_by, meetup, agreement`;
 
-const person = (p: P): Person => ({ id: p.id, prescreen: p.prescreen && 'answers' in p.prescreen ? p.prescreen : null, see: p.see, quick: p.quick ?? {} });
+// score.ts Person. Only complete profiles (lib/questions.ts) go in: score.ts throws on a missing or unknown answer.
+const pre = (p: P) => (p.prescreen && 'answers' in p.prescreen ? p.prescreen : null);
+const person = (p: P): Person => ({ id: String(p.id), answers: p.quick as Answers, pets: pre(p)?.answers.pets?.[0] ?? '', deal: pre(p)?.dealbreakers ?? [] });
+const habits = (p: P) => ({ quick: p.quick ?? {}, prescreen: pre(p) });
 const other = (m: M, me: number) => (m.a === me ? m.b : m.a);
-const hasQuick = (p: P) => Object.keys(p.quick ?? {}).length > 0;
 
 const month = (ymd: string) => new Date(ymd + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' });
 // "Astoria · $1,500–2,000 · Move-in Oct", from real fields only.
@@ -75,7 +77,7 @@ const meta = (p: P) =>
   ].filter(Boolean).join(' · ');
 
 const draft = (me: P, them: P, l: Listing | null): Agreement => {
-  const d = draftAgreement(person(me), person(them), l ? `${l.isBuilding ? 'from ' : ''}${usd(l.price / 2)} each` : 'split 50/50');
+  const d = draftAgreement(habits(me), habits(them), l ? `${l.isBuilding ? 'from ' : ''}${usd(l.price / 2)} each` : 'split 50/50');
   return { sections: d.sections, open: d.open.map((q) => ({ q, resolved: false })), confirmed: [] };
 };
 
@@ -98,10 +100,11 @@ async function views(me: P, rows: M[], byId: Map<number, P>, aiCount: number): P
   for (const [i, m] of rows.entries()) {
     const them = byId.get(other(m, me.id));
     if (!them) continue;
-    const pair = scorePair(person(me), person(them));
-    const habits = pair?.habits ?? m.reasons.habits ?? [];
-    const rule = explain(pair ?? { score: m.score, habits }, them.name);
-    let ai = m.reasons.ai?.[me.id] ?? null;
+    // Fresh score.ts math when both sides are complete; otherwise the cached parts. Cached Gemini copy never shows with AI off.
+    const fresh = complete(me.quick) && complete(them.quick) ? score(me.quick as Answers, them.quick as Answers) : null;
+    const parts = fresh?.parts ?? m.reasons.parts ?? [];
+    const rule = clickClash(parts);
+    let ai = aiOn() ? m.reasons.ai?.[me.id] ?? null : null;
     if (!ai && aiOn() && i < aiCount) {
       ai = await matchCard({ name: me.name, quick: me.quick, transcript: me.transcript }, { name: them.name, quick: them.quick, transcript: them.transcript });
       if (ai) await query(`update matches set reasons = jsonb_set(reasons, '{ai}', coalesce(reasons->'ai', '{}'::jsonb) || $2::jsonb) where id = $1`, [m.id, JSON.stringify({ [me.id]: ai })]);
@@ -111,10 +114,10 @@ async function views(me: P, rows: M[], byId: Map<number, P>, aiCount: number): P
     const pick = [m.listing, overlap[0], me.saved[0], them.saved[0]].flatMap((z) => (z && listing.get(z)) || [])[0] ?? (await fallback(them));
     const mutual = MUTUAL.has(m.status);
     out.push({
-      id: m.id, score: m.score, status: m.status, mutual,
+      id: m.id, score: fresh?.pct ?? m.score, status: m.status, mutual,
       likedByMe: m.liked_by.includes(me.id), passedByMe: m.passed_by.includes(me.id),
-      other: { id: them.id, name: them.name, initials: initials(them.name), synthetic: them.synthetic, meta: meta(them), tags: them.signals?.tags?.length ? them.signals.tags : tags(them.quick ?? {}) },
-      bars: habits.slice(0, 6),
+      other: { id: them.id, name: them.name, initials: initials(them.name), synthetic: them.synthetic, meta: meta(them), tags: complete(them.quick) ? tags(them.quick as Answers) : [] },
+      bars: parts,
       click: ai?.click ?? rule.click, clash: ai?.clash ?? rule.clash, summary: ai?.summary ?? null, ai: !!ai,
       contradiction: (them.signals?.contradictions ?? contradictions(them.quick ?? {}, them.transcript ?? ''))[0] ?? null,
       saved, savedOverlap: overlap.length, listing: pick,
@@ -124,13 +127,15 @@ async function views(me: P, rows: M[], byId: Map<number, P>, aiCount: number): P
   return out;
 }
 
-// Scores me against everyone with quick answers, caches the top 20 pairs (status, likes, meetup and agreement survive), returns them score desc.
+// score.ts rank() over every complete profile (its dealbreaker filter is the only pool filter), caches the top 20 pairs
+// (status, likes, meetup and agreement survive) and returns them score desc. Pairs the viewer liked stay on the list below
+// the top 20 even when a re-rank pushes them out, so SHORTLIST_CAP always counts cards the viewer can see.
 export async function getTopMatches(meId: number): Promise<MatchView[]> {
   const rows = await query<P>(`${P_SQL} where quick_answers <> '{}' or id = $1`, [meId]);
   const me = rows.find((p) => p.id === meId);
-  if (!me || !hasQuick(me)) return [];
+  if (!me || !complete(me.quick)) return [];
   const byId = new Map(rows.map((p) => [p.id, p]));
-  const ranked = rank(person(me), rows.filter((p) => p.id !== meId).map(person), 20);
+  const ranked = rank(person(me), rows.filter((p) => p.id !== meId && complete(p.quick)).map(person)).slice(0, 20);
   if (!ranked.length) return [];
   const matches = await query<M>(
     `with up as (
@@ -140,8 +145,11 @@ export async function getTopMatches(meId: number): Promise<MatchView[]> {
        on conflict (profile_a, profile_b) do update
          set score = excluded.score, reasons = matches.reasons || excluded.reasons, updated_at = now()
        returning *)
-     select ${M_COLS} from up order by score desc, id`,
-    [meId, ranked.map((r) => r.person.id), ranked.map((r) => r.result.score), ranked.map((r) => JSON.stringify({ habits: r.result.habits }))],
+     select ${M_COLS}, 0 as extra from up
+     union all
+     select ${M_COLS}, 1 as extra from matches where $1 in (profile_a, profile_b) and $1 = any(liked_by) and id not in (select id from up)
+     order by extra, score desc, id`,
+    [meId, ranked.map((r) => Number(r.id)), ranked.map((r) => r.pct), ranked.map((r) => JSON.stringify({ parts: r.parts }))],
   );
   return views(me, matches, byId, AI_IN_LIST);
 }
@@ -183,7 +191,7 @@ export async function actOnMatch(meId: number, matchId: number, action: Action, 
         `select count(*)::int as n from matches where $1 = any(liked_by) and id <> $2 and $1 in (profile_a, profile_b)`, [meId, m.id]);
       if (n >= SHORTLIST_CAP) throw new MatchError(409, `Shortlist is full (${SHORTLIST_CAP})`);
       const liked = [...m.liked_by, meId];
-      if (them.synthetic && m.score >= LIKE_BACK && !liked.includes(otherId)) liked.push(otherId);
+      if (them.synthetic && view.score >= LIKE_BACK && !liked.includes(otherId)) liked.push(otherId);
       await set({ liked_by: liked, passed_by: m.passed_by.filter((p) => p !== meId), status: liked.includes(otherId) ? 'mutual' : 'shortlisted' });
       break;
     }
@@ -228,12 +236,16 @@ export async function actOnMatch(meId: number, matchId: number, action: Action, 
       if (!them.synthetic) throw new MatchError(409, 'Only a sample profile can be simulated');
       await set({ agreement: { ...agreement, confirmed: [...new Set([...agreement.confirmed, otherId])] } });
       break;
-    case 'lock':
+    case 'lock': {
       mutual();
       if (!m.agreement || !m.agreement.confirmed.includes(meId) || !m.agreement.confirmed.includes(otherId)) throw new MatchError(409, 'Both need to confirm first');
-      if (!view.listing) throw new MatchError(409, 'No listing to lock');
-      await set({ status: 'locked', listing: view.listing.zpid });
+      // payload.listing (a zpid the pair picked) wins over the pair's default listing.
+      const zpid = str(payload.listing, 40);
+      const listing = zpid ? await getListing(zpid) : view.listing;
+      if (!listing) throw zpid ? new MatchError(400, 'listing: unknown listing') : new MatchError(409, 'No listing to lock');
+      await set({ status: 'locked', listing: listing.zpid });
       break;
+    }
     default:
       throw new MatchError(400, 'Unknown action');
   }
