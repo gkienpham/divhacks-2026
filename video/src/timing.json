@@ -1,0 +1,495 @@
+{
+ "voDuration": 25.449,
+ "lines": [
+  {
+   "id": "S01",
+   "text": "Every New Yorker has a roommate horror story.",
+   "start": 0,
+   "end": 2.125,
+   "words": [
+    {
+     "text": "Every",
+     "start": 0,
+     "end": 0.279
+    },
+    {
+     "text": "New",
+     "start": 0.337,
+     "end": 0.441
+    },
+    {
+     "text": "Yorker",
+     "start": 0.488,
+     "end": 0.755
+    },
+    {
+     "text": "has",
+     "start": 0.801,
+     "end": 0.917
+    },
+    {
+     "text": "a",
+     "start": 0.964,
+     "end": 0.998
+    },
+    {
+     "text": "roommate",
+     "start": 1.057,
+     "end": 1.405
+    },
+    {
+     "text": "horror",
+     "start": 1.44,
+     "end": 1.66
+    },
+    {
+     "text": "story.",
+     "start": 1.695,
+     "end": 2.125
+    }
+   ]
+  },
+  {
+   "id": "S02",
+   "text": "Most start with one DM vibe check and a twelve-month lease.",
+   "start": 2.438,
+   "end": 5.352,
+   "words": [
+    {
+     "text": "Most",
+     "start": 2.438,
+     "end": 2.67
+    },
+    {
+     "text": "start",
+     "start": 2.705,
+     "end": 2.891
+    },
+    {
+     "text": "with",
+     "start": 2.926,
+     "end": 3.053
+    },
+    {
+     "text": "one",
+     "start": 3.111,
+     "end": 3.286
+    },
+    {
+     "text": "DM",
+     "start": 3.32,
+     "end": 3.564
+    },
+    {
+     "text": "vibe",
+     "start": 3.622,
+     "end": 3.843
+    },
+    {
+     "text": "check",
+     "start": 3.878,
+     "end": 4.098
+    },
+    {
+     "text": "and",
+     "start": 4.18,
+     "end": 4.342
+    },
+    {
+     "text": "a",
+     "start": 4.389,
+     "end": 4.412
+    },
+    {
+     "text": "twelve-month",
+     "start": 4.458,
+     "end": 4.899
+    },
+    {
+     "text": "lease.",
+     "start": 4.957,
+     "end": 5.352
+    }
+   ]
+  },
+  {
+   "id": "S03",
+   "text": "RoomMe matches you on how you actually live.",
+   "start": 5.747,
+   "end": 7.639,
+   "words": [
+    {
+     "text": "RoomMe",
+     "start": 5.747,
+     "end": 6.014
+    },
+    {
+     "text": "matches",
+     "start": 6.072,
+     "end": 6.374
+    },
+    {
+     "text": "you",
+     "start": 6.409,
+     "end": 6.49
+    },
+    {
+     "text": "on",
+     "start": 6.56,
+     "end": 6.629
+    },
+    {
+     "text": "how",
+     "start": 6.676,
+     "end": 6.78
+    },
+    {
+     "text": "you",
+     "start": 6.838,
+     "end": 6.92
+    },
+    {
+     "text": "actually",
+     "start": 6.978,
+     "end": 7.268
+    },
+    {
+     "text": "live.",
+     "start": 7.314,
+     "end": 7.639
+    }
+   ]
+  },
+  {
+   "id": "S04",
+   "text": "Tap ten habits. Then talk for ninety seconds.",
+   "start": 8.046,
+   "end": 10.553,
+   "words": [
+    {
+     "text": "Tap",
+     "start": 8.046,
+     "end": 8.301
+    },
+    {
+     "text": "ten",
+     "start": 8.359,
+     "end": 8.51
+    },
+    {
+     "text": "habits.",
+     "start": 8.58,
+     "end": 9.056
+    },
+    {
+     "text": "Then",
+     "start": 9.242,
+     "end": 9.392
+    },
+    {
+     "text": "talk",
+     "start": 9.427,
+     "end": 9.578
+    },
+    {
+     "text": "for",
+     "start": 9.613,
+     "end": 9.718
+    },
+    {
+     "text": "ninety",
+     "start": 9.822,
+     "end": 10.043
+    },
+    {
+     "text": "seconds.",
+     "start": 10.089,
+     "end": 10.553
+    }
+   ]
+  },
+  {
+   "id": "S05",
+   "text": "We flag answers that don't add up.",
+   "start": 10.855,
+   "end": 12.608,
+   "words": [
+    {
+     "text": "We",
+     "start": 10.855,
+     "end": 10.983
+    },
+    {
+     "text": "flag",
+     "start": 11.029,
+     "end": 11.297
+    },
+    {
+     "text": "answers",
+     "start": 11.355,
+     "end": 11.714
+    },
+    {
+     "text": "that",
+     "start": 11.749,
+     "end": 11.877
+    },
+    {
+     "text": "don't",
+     "start": 11.912,
+     "end": 12.109
+    },
+    {
+     "text": "add",
+     "start": 12.144,
+     "end": 12.272
+    },
+    {
+     "text": "up.",
+     "start": 12.33,
+     "end": 12.608
+    }
+   ]
+  },
+  {
+   "id": "S06",
+   "text": "Your match score is a metric built from your answers.",
+   "start": 13.003,
+   "end": 15.371,
+   "words": [
+    {
+     "text": "Your",
+     "start": 13.003,
+     "end": 13.154
+    },
+    {
+     "text": "match",
+     "start": 13.212,
+     "end": 13.409
+    },
+    {
+     "text": "score",
+     "start": 13.433,
+     "end": 13.723
+    },
+    {
+     "text": "is",
+     "start": 13.758,
+     "end": 13.827
+    },
+    {
+     "text": "a",
+     "start": 13.862,
+     "end": 13.897
+    },
+    {
+     "text": "metric",
+     "start": 13.978,
+     "end": 14.28
+    },
+    {
+     "text": "built",
+     "start": 14.315,
+     "end": 14.477
+    },
+    {
+     "text": "from",
+     "start": 14.512,
+     "end": 14.628
+    },
+    {
+     "text": "your",
+     "start": 14.663,
+     "end": 14.779
+    },
+    {
+     "text": "answers.",
+     "start": 14.814,
+     "end": 15.371
+    }
+   ]
+  },
+  {
+   "id": "S07",
+   "text": "Shortlist up to five. Meet when it's mutual.",
+   "start": 15.662,
+   "end": 18.193,
+   "words": [
+    {
+     "text": "Shortlist",
+     "start": 15.662,
+     "end": 16.091
+    },
+    {
+     "text": "up",
+     "start": 16.126,
+     "end": 16.196
+    },
+    {
+     "text": "to",
+     "start": 16.231,
+     "end": 16.289
+    },
+    {
+     "text": "five.",
+     "start": 16.347,
+     "end": 16.788
+    },
+    {
+     "text": "Meet",
+     "start": 17.171,
+     "end": 17.357
+    },
+    {
+     "text": "when",
+     "start": 17.392,
+     "end": 17.519
+    },
+    {
+     "text": "it's",
+     "start": 17.554,
+     "end": 17.67
+    },
+    {
+     "text": "mutual.",
+     "start": 17.705,
+     "end": 18.193
+    }
+   ]
+  },
+  {
+   "id": "S08",
+   "text": "Every listing gets a fair-price check.",
+   "start": 18.506,
+   "end": 20.236,
+   "words": [
+    {
+     "text": "Every",
+     "start": 18.506,
+     "end": 18.75
+    },
+    {
+     "text": "listing",
+     "start": 18.808,
+     "end": 19.121
+    },
+    {
+     "text": "gets",
+     "start": 19.168,
+     "end": 19.307
+    },
+    {
+     "text": "a",
+     "start": 19.342,
+     "end": 19.365
+    },
+    {
+     "text": "fair-price",
+     "start": 19.4,
+     "end": 19.818
+    },
+    {
+     "text": "check.",
+     "start": 19.853,
+     "end": 20.236
+    }
+   ]
+  },
+  {
+   "id": "S09",
+   "text": "Agree on house rules, then apply together.",
+   "start": 20.526,
+   "end": 22.233,
+   "words": [
+    {
+     "text": "Agree",
+     "start": 20.526,
+     "end": 20.793
+    },
+    {
+     "text": "on",
+     "start": 20.828,
+     "end": 20.898
+    },
+    {
+     "text": "house",
+     "start": 20.944,
+     "end": 21.142
+    },
+    {
+     "text": "rules,",
+     "start": 21.176,
+     "end": 21.409
+    },
+    {
+     "text": "then",
+     "start": 21.432,
+     "end": 21.548
+    },
+    {
+     "text": "apply",
+     "start": 21.583,
+     "end": 21.769
+    },
+    {
+     "text": "together.",
+     "start": 21.815,
+     "end": 22.233
+    }
+   ]
+  },
+  {
+   "id": "S10",
+   "text": "RoomMe. Find a roommate who lives like you do.",
+   "start": 22.523,
+   "end": 25.449,
+   "words": [
+    {
+     "text": "RoomMe.",
+     "start": 22.523,
+     "end": 23.162
+    },
+    {
+     "text": "Find",
+     "start": 23.498,
+     "end": 23.754
+    },
+    {
+     "text": "a",
+     "start": 23.8,
+     "end": 23.835
+    },
+    {
+     "text": "roommate",
+     "start": 23.916,
+     "end": 24.253
+    },
+    {
+     "text": "who",
+     "start": 24.276,
+     "end": 24.381
+    },
+    {
+     "text": "lives",
+     "start": 24.439,
+     "end": 24.601
+    },
+    {
+     "text": "like",
+     "start": 24.636,
+     "end": 24.776
+    },
+    {
+     "text": "you",
+     "start": 24.81,
+     "end": 24.915
+    },
+    {
+     "text": "do.",
+     "start": 24.973,
+     "end": 25.449
+    }
+   ]
+  }
+ ]
+}

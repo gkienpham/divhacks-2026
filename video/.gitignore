@@ -1,0 +1,4 @@
+/node_modules
+/out
+# Screenshots of roomme.tech contain third-party listing photos. Regenerate with `npm run capture`.
+/public/captures

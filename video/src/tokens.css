@@ -1,0 +1,119 @@
+/* :root tokens copied verbatim from web/app/globals.css (minus Tailwind, hover classes and keyframes). */
+:root{
+/* Base palette (from the Wayfare template, exact) */
+--background:#f5f4f1;
+--foreground:#141211;
+--ink:#0e0c0b;
+--muted-foreground:#6e6a65;
+--brand:#3d7096;
+--sand:#eae7e1;
+--muted:#ebe9e6;
+--card:#ffffff;
+--border:#dddbd7;
+--destructive:#e40014;
+/* RoomMe status dots: dots only, never fills or text */
+--fair:#4a7c59;
+--watch:#b7791f;
+--risk:var(--destructive);
+
+/* Semantic aliases */
+--surface-page:var(--background);
+--surface-card:var(--card);
+--surface-alt:rgba(234,231,225,.6);   /* --sand @ 60% alt section bg */
+--surface-tile:var(--sand);
+--surface-ink:var(--ink);
+--text-body:var(--foreground);
+--text-heading:var(--ink);
+--text-muted:var(--muted-foreground);
+--text-on-ink:var(--background);
+--text-number:var(--brand);
+--line:var(--border);
+--line-ink-10:rgba(14,12,11,.10);
+--line-ink-20:rgba(14,12,11,.20);
+--line-ink-40:rgba(14,12,11,.40);
+--underline-25:rgba(14,12,11,.25);
+
+/* On dark sections: white alphas */
+--on-dark-100:#ffffff;
+--on-dark-lead:rgba(255,255,255,.75);
+--on-dark-nav:rgba(255,255,255,.70);
+--on-dark-meta:rgba(255,255,255,.60);
+--on-dark-footer:rgba(255,255,255,.50);
+--on-dark-footer-dim:rgba(255,255,255,.55);
+--on-dark-footer-hi:rgba(255,255,255,.55);
+--on-dark-line:rgba(255,255,255,.12);
+--on-dark-line-strong:rgba(255,255,255,.30);
+
+/* Overlays */
+--frost-ink:rgba(14,12,11,.6);
+--frost-white:rgba(255,255,255,.90);
+--header-scrolled:rgba(14,12,11,.92);
+--photo-gradient:linear-gradient(180deg,rgba(14,12,11,0) 30%,rgba(14,12,11,.6) 62%,rgba(14,12,11,.85) 100%); /* @kind other */
+--photo-gradient-left:linear-gradient(90deg,rgba(14,12,11,.85) 0%,rgba(14,12,11,.55) 50%,rgba(14,12,11,.15) 100%); /* @kind other */
+}
+:root{
+--font-sans:var(--font-dm-sans),ui-sans-serif,system-ui,sans-serif;
+--font-hand:var(--font-caveat),cursive; /* one handwritten note per screen, max */
+
+--h1-hero-size:92px;--h1-hero-weight:500;--h1-hero-leading:.98;--h1-hero-tracking:-.035em;
+--h1-size:84px;--h1-weight:500;--h1-leading:.98;--h1-tracking:-.035em;
+--h2-size:60px;--h2-weight:500;--h2-leading:1.02;--h2-tracking:-.03em;
+--h2-secondary-size:44px;--h2-secondary-leading:1.08;--h2-secondary-tracking:-.025em;
+--quote-size:44px;
+--h3-lg-size:26px;--h3-md-size:22px;--h3-sm-size:18px;--h3-weight:500;--h3-tracking:-.015em;
+--body-size:16px;--body-leading:24px;--body-weight:400;
+--lead-size:15px;--lead-leading:1.625;
+--card-text-size:14px;--card-text-sm-size:13px;--card-text-leading:1.6;
+--nav-size:14px;--nav-weight:400;
+--button-size:14px;--button-lg-size:15px;--button-weight:500;--button-tracking:-.01em;
+--eyebrow-size:11px;--eyebrow-weight:500;--eyebrow-tracking:.18em;
+--label-size:13px;--meta-size:12px;
+--display-number-size:60px;
+--hand-size:26px;
+}
+:root{
+/* Layout */
+--container-max:1440px;
+--page-gutter:48px;
+--grid-columns:12; /* @kind other */
+--grid-gap:48px;
+--section-y:112px;
+--card-grid-gap:16px;
+/* Spacing scale */
+--space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:20px;--space-6:24px;--space-8:32px;--space-10:40px;--space-12:48px;--space-16:64px;--space-20:80px;--space-28:112px;
+/* Radii */
+--radius:12px;
+--radius-field:16.8px;   /* fields + images inside cards */
+--radius-image-card:21.6px;
+--radius-form-card:24px;
+--radius-feature:28px;   /* CTA bands, featured cards */
+--radius-pill:9999px;
+/* Sizes */
+--control-sm:40px;--control-md:44px;--control-lg:48px;
+--field-height:48px;
+--icon-circle-sm:32px;--icon-circle-md:40px;--icon-circle-lg:56px;
+--avatar-sm:36px;--avatar-md:48px;--avatar-lg:72px;
+--header-height:72px;
+/* Depth: no shadows except polaroids */
+--shadow-none:none;
+--shadow-polaroid:0 18px 40px -18px rgba(20,18,14,.45);
+--hairline:1px solid var(--border);
+--blur-frost:12px;
+}
+:root{
+--ease-out:cubic-bezier(.22,1,.36,1); /* @kind other */
+--ease-standard:cubic-bezier(.4,0,.2,1); /* @kind other */
+--dur-fast:.2s; /* @kind other */--dur-base:.3s; /* @kind other */
+--dur-card-zoom:.9s; /* @kind other */--card-zoom-scale:1.04; /* @kind other */
+--dur-hero-zoom:16s; /* @kind other */--hero-zoom-from:1.14; /* @kind other */
+--dur-rise:.95s; /* @kind other */--rise-distance:28px; /* @kind other */
+--rise-delay-1:0ms; /* @kind other */--rise-delay-2:120ms; /* @kind other */--rise-delay-3:260ms; /* @kind other */--rise-delay-4:380ms; /* @kind other */
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--ink);color:var(--foreground);font-family:var(--font-sans);-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4,p{margin:0}
+/* Remotion renders frame by frame, so CSS transitions/animations (the rm components use some) would flicker.
+   Every motion in the video comes from useCurrentFrame(). */
+*,*::before,*::after{transition:none!important;animation:none!important}

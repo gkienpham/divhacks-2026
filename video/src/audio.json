@@ -1,0 +1,16 @@
+{
+ "vo": true,
+ "music": true,
+ "sfx": [
+  "whoosh",
+  "whoosh-soft",
+  "tap",
+  "pop",
+  "type",
+  "riser",
+  "impact",
+  "stamp",
+  "chime",
+  "paper"
+ ]
+}
