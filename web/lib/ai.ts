@@ -40,7 +40,8 @@ export async function matchCard(me: PersonText, them: PersonText): Promise<AiCar
       headers: { 'content-type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY! },
       body: JSON.stringify({
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig: { responseMimeType: 'application/json', responseSchema: SCHEMA, temperature: 0.4, maxOutputTokens: 400 },
+        // Thinking tokens count against maxOutputTokens: at the default level they ate all 400 (MAX_TOKENS, empty JSON).
+        generationConfig: { responseMimeType: 'application/json', responseSchema: SCHEMA, temperature: 0.4, maxOutputTokens: 400, thinkingConfig: { thinkingLevel: 'low' } },
       }),
       signal: AbortSignal.timeout(8_000),
     });
