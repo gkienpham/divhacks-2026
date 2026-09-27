@@ -40,23 +40,32 @@ export const undash = (v: unknown): unknown =>
   : Array.isArray(v) ? v.map(undash) : v;
 
 // One JSON call. null on any failure (no key, timeout, bad JSON): callers fall back to rule-based copy.
+// A 429 or 5xx gets one retry a second later on RETRY_MODEL: on 2026-09-27 3.8-flash answered "high demand" (503) for
+// minutes at a time while 3.6-flash answered every call in 1 to 2 s. Timeouts don't retry, so a call waits at most ~17 s.
+const RETRY_MODEL = 'gemini-3.6-flash';
 async function gemini(prompt: string, schema: object, temperature: number): Promise<Record<string, unknown> | null> {
   if (!aiOn()) return null;
+  const body = JSON.stringify({
+    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    // Thinking tokens count against maxOutputTokens: at the default level they ate all 400 (MAX_TOKENS, empty JSON).
+    generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature, maxOutputTokens: 400, thinkingConfig: { thinkingLevel: 'low' } },
+  });
   try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL()}:generateContent`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY! },
-      body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        // Thinking tokens count against maxOutputTokens: at the default level they ate all 400 (MAX_TOKENS, empty JSON).
-        generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature, maxOutputTokens: 400, thinkingConfig: { thinkingLevel: 'low' } },
-      }),
-      signal: AbortSignal.timeout(8_000),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    const raw = JSON.parse(data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '');
-    return raw && typeof raw === 'object' ? Object.fromEntries(Object.entries(raw).map(([k, v]) => [k, undash(v)])) : null;
+    for (const [i, model] of [MODEL(), RETRY_MODEL].entries()) {
+      if (i) await new Promise((r) => setTimeout(r, 1_000));
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY! },
+        body,
+        signal: AbortSignal.timeout(8_000),
+      });
+      if (res.status === 429 || res.status >= 500) continue;
+      if (!res.ok) return null;
+      const data = await res.json();
+      const raw = JSON.parse(data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '');
+      return raw && typeof raw === 'object' ? Object.fromEntries(Object.entries(raw).map(([k, v]) => [k, undash(v)])) : null;
+    }
+    return null;
   } catch {
     return null;
   }
