@@ -5,6 +5,18 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import * as LT from '@/components/rm';
 import { usd } from '@/lib/format';
+import { QUESTIONS, agreement } from '@/lib/score';
+import { ME, personById } from '@/lib/sample-data';
+
+// Every match number on this page comes from lib/score (the engine) or Sam's sample profile, scored by it. None are typed in.
+const SAM = personById('sam');
+const Q = Object.fromEntries(QUESTIONS.map(f => [f.k, f]));
+const N = QUESTIONS.length;
+const hhmm = h => String(Math.floor(h)).padStart(2, '0') + ':' + String(Math.round(h % 1 * 60)).padStart(2, '0');
+const G = Q.guests.opts, guests = (a, b) => agreement('guests', G[a], G[b]);
+const HALF = agreement('sleepNoise', ['I snore'], ['No one’s mentioned it']);
+const SI = Q.smoking.opts.indexOf('Sometimes inside');
+const bar = p => <LT.HabitBar key={p.k} icon={p.icon} label={p.label} value={p.v} you={p.you} them={p.them} themName={SAM.n} />;
 
 const NAV = { 'How it works': 'how-it-works', 'Neighborhoods': 'neighborhoods', 'Safety': 'safety', 'FAQ': 'faq' };
 const jump = id => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
@@ -140,18 +152,16 @@ function OptInFragment() {
   </div>;
 }
 const TABS = [
-  { t: 'Math, not AI', d: 'Your score is a weighted comparison of your answers. AI never sets it.', f: () => <div style={{ width: '100%', maxWidth: 460, display: 'grid', gap: 28 }}>
+  { t: 'Math, not AI', d: `Your score is the average agreement across your ${N} answers. AI never sets it.`, f: () => <div style={{ width: '100%', maxWidth: 460, display: 'grid', gap: 28 }}>
     <div style={{ display: 'grid', justifyItems: 'start', gap: 16, fontFamily: 'var(--font-sans)' }}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, color: 'var(--ink)', whiteSpace: 'nowrap' }}>
-        <span style={{ fontSize: 60, fontWeight: 500, lineHeight: 1, letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums' }}>87%</span>
+        <span style={{ fontSize: 60, fontWeight: 500, lineHeight: 1, letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums' }}>{SAM.s}%</span>
         <span style={{ fontSize: 28, fontWeight: 500, lineHeight: 1, letterSpacing: '-0.02em' }}>Match</span>
       </div>
-      <LT.LinkUnderline size={13} href="#faq">How it’s scored</LT.LinkUnderline>
+      <LT.LinkUnderline size={13} href="#how-it-works">How it’s scored</LT.LinkUnderline>
     </div>
     <div style={{ display: 'grid', gap: 22 }}>
-      <LT.HabitBar icon="moon" label="Sleep" value={96} you="23:00–00:00" them="23:00–00:00" themName="Sam" />
-      <LT.HabitBar icon="utensils" label="Dishes" value={72} you="Same evening" them="Next morning" themName="Sam" />
-      <LT.HabitBar icon="users" label="Guests" value={45} you="Rarely (1–2/month)" them="Most weekends" themName="Sam" />
+      {['bedtime', 'noise', 'overnight'].map(k => bar(SAM.parts.find(p => p.k === k)))}
     </div>
   </div> },
   { t: 'Contradictions, quoted', d: 'When answers don’t line up, we quote both and suggest a question. You decide whether to send it.', f: () => <LT.ContradictionCallout style={{ width: '100%', maxWidth: 500 }} answers={[{ source: 'Quick-tap · Guests', quote: 'Rarely (1–2/month)' }, { source: 'Voice interview', quote: 'I host brunch most Sundays' }]} question="How often do you usually have people over on weekends?" /> },
@@ -166,10 +176,15 @@ const TABS = [
   </div> },
   { t: 'Works with AI off', d: 'If the AI is down, matching still works.', f: () => <div style={{ width: '100%', maxWidth: 440, display: 'grid', gap: 22, justifyItems: 'start' }}>
     <LT.AIOffBadge />
-    <LT.MatchScore value={87} showLink={false} />
-    <p style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--foreground)', borderTop: '1px solid var(--border)', paddingTop: 18 }}>Sleep: same answer (23:00–00:00). Guests: different answers (Rarely (1–2/month) · Most weekends).</p>
+    <LT.MatchScore value={SAM.s} showLink={false} />
+    <p style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--foreground)', borderTop: '1px solid var(--border)', paddingTop: 18 }}>{aiOffLine()}</p>
   </div> },
 ];
+// The rule-based line AI-off shows: Sam's first exact match and his lowest agreement.
+function aiOffLine() {
+  const same = SAM.parts.find(p => p.v === 100), low = SAM.parts.reduce((a, b) => b.v < a.v ? b : a);
+  return `${same.label}: same answer (${same.you}). ${low.label}: ${low.v}% (${low.you} · ${low.them}).`;
+}
 function TrustTabs() {
   const [a, setA] = React.useState(0);
   const T = TABS[a];
@@ -208,7 +223,86 @@ function HowItWorks() {
       { icon: 'users', title: 'Meet your top 5', text: 'Explained matches; chat opens on mutual yes; meet in public.' },
       { icon: 'file-text', title: 'Sign the House Agreement', text: 'Quiet hours, guests, chores and bills, agreed before the lease.' },
     ]} />
+    <ScoreMath />
   </section>;
+}
+
+// The match % explainer. The table and worked example render from lib/score and Sam's scored profile, so they can't drift from the code.
+const H3 = { margin: 0, fontSize: 26, fontWeight: 500, lineHeight: 1.2, letterSpacing: '-0.015em', color: 'var(--ink)', textWrap: 'pretty' };
+const MUTED = { margin: 0, fontSize: 15, lineHeight: 1.625, color: 'var(--muted-foreground)' };
+const TH = { padding: '0 24px 16px 0', textAlign: 'left', fontSize: 11, fontWeight: 500, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--muted-foreground)' };
+const TD = { padding: '20px 24px 20px 0', borderTop: '1px solid var(--border)', verticalAlign: 'top', fontSize: 15, lineHeight: 1.5, color: 'var(--ink)' };
+const MEASURE = {
+  clock: f => [f.vals.map(hhmm).join(' · '), 'Hours apart on a 24-hour clock', f.full + ' h apart'],
+  ratio: f => [f.vals.join(' · ') + ' ' + f.unit, 'Ratio of (1 + value)', 2 ** f.full + '× apart'],
+  linear: f => [f.vals.join(' · ') + ' ' + f.unit, f.unit === 'dB' ? 'dB apart (approx.)' : f.unit.replace(/^./, c => c.toUpperCase()) + ' apart', f.full + ' ' + f.unit + ' apart'],
+  same: () => ['Reports sleep noise, or not', 'Same answer or not', 'Never: a mismatch scores ' + HALF + '%'],
+};
+const STEPS = [
+  ['Dealbreakers filter first, both ways', 'Your dealbreakers are checked against their answers, and theirs against yours. “No smoking/vaping indoors” rules out anyone who smokes sometimes or often inside. A pet allergy, or needing a pet-free home, rules out anyone who has a pet or plans to get one. Filtered people never appear.'],
+  ['Each answer becomes a real quantity', <>Bedtimes become clock hours, guests become guests a month, noise becomes decibels. For each question we measure the gap between your answer and theirs:
+    <div style={{ margin: '16px 0', padding: '16px 20px', borderRadius: 12, background: 'var(--sand)', fontSize: 17, fontWeight: 500, letterSpacing: '-0.01em', color: 'var(--ink)' }}>agreement = max(0, 1 − gap ÷ full-clash gap)</div>
+    Rounded to a whole %. The same answer scores 100%. A gap as wide as the full-clash gap, or wider, scores 0%.</>],
+  ['Your match % is the average', `Add the ${N} agreements, divide by ${N} and round. Every question counts the same: ${100 / N} points each. AI never sets it, and voice answers don’t change it.`],
+];
+const NOTES = [
+  ['Counts use ratios', 'Going from never to once a month is a bigger change than going from 8 to 9 times a month.'],
+  [`Sleep clashes at ${Q.bedtime.full} hours`, `At ${Q.bedtime.full} hours apart, one person’s whole wind-down or morning happens during the other’s sleep.`],
+  ['Smoking skips a step', `“Sometimes inside” sits at ${Q.smoking.vals[SI]}, not ${SI}, because crossing indoors counts double.`],
+  ['Sleep noise costs half', `Snoring or grinding can be medical, so a mismatch scores ${HALF}% and never rules anyone out.`],
+];
+function ScoreMath() {
+  const vs = SAM.parts.map(p => p.v), mean = vs.reduce((s, v) => s + v, 0) / vs.length;
+  return <div style={{ marginTop: 112, paddingTop: 72, borderTop: '1px solid var(--border)', display: 'grid', gridTemplateColumns: 'repeat(12,minmax(0,1fr))', columnGap: 48, rowGap: 80 }}>
+    <div style={{ gridColumn: 'span 4' }}>
+      <LT.Eyebrow>The math</LT.Eyebrow>
+      <h3 style={{ ...H3, margin: '24px 0 0', fontSize: 44, lineHeight: 1.08, letterSpacing: '-0.025em' }}>How your match % is calculated</h3>
+      <p style={{ ...MUTED, marginTop: 24 }}>Three steps, the same for everyone. The table below is read straight from the scoring code, so it can’t drift from what the app does.</p>
+    </div>
+    <ol style={{ gridColumn: '6 / span 7', margin: 0, padding: 0, listStyle: 'none', borderBottom: '1px solid var(--border)' }}>
+      {STEPS.map(([t, body], i) => <li key={t} style={{ display: 'grid', gridTemplateColumns: '56px minmax(0,1fr)', padding: '28px 0', borderTop: '1px solid var(--border)' }}>
+        <span style={{ paddingTop: 4, fontSize: 13, fontWeight: 500, color: 'var(--brand)', fontVariantNumeric: 'tabular-nums' }}>{String(i + 1).padStart(2, '0')}</span>
+        <div>
+          <div style={{ fontSize: 18, fontWeight: 500, letterSpacing: '-0.01em', color: 'var(--ink)' }}>{t}</div>
+          <div style={{ ...MUTED, marginTop: 10 }}>{body}</div>
+        </div>
+      </li>)}
+    </ol>
+
+    <div style={{ gridColumn: 'span 12' }}>
+      <h3 style={H3}>The {N} questions, in real units</h3>
+      <p style={{ ...MUTED, marginTop: 10 }}>Each value lines up with the answer beneath it, in order.</p>
+      <table style={{ marginTop: 32, width: '100%', borderCollapse: 'collapse', fontVariantNumeric: 'tabular-nums' }}>
+        <thead><tr>{[['Question', '20%'], ['Values we use', '40%'], ['How we measure the gap', '22%'], ['Agreement hits 0% at', '18%']].map(([h, w]) => <th key={h} style={{ ...TH, width: w }}>{h}</th>)}</tr></thead>
+        <tbody>{QUESTIONS.map(f => { const [vals, gap, zero] = MEASURE[f.kind](f); return <tr key={f.k}>
+          <td style={{ ...TD, fontWeight: 500 }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><LT.Icon name={f.icon} size={15} />{f.label}</span></td>
+          <td style={TD}>{vals}<div style={{ marginTop: 6, fontSize: 12, color: 'var(--muted-foreground)' }}>{f.opts.join(' · ')}</div></td>
+          <td style={TD}>{gap}</td>
+          <td style={TD}>{zero}</td>
+        </tr>; })}</tbody>
+      </table>
+    </div>
+
+    {NOTES.map(([t, d]) => <div key={t} style={{ gridColumn: 'span 3', borderTop: '1px solid var(--border)', paddingTop: 20 }}>
+      <div style={{ fontSize: 15, fontWeight: 500, letterSpacing: '-0.01em', color: 'var(--ink)' }}>{t}</div>
+      <p style={{ margin: '8px 0 0', fontSize: 14, lineHeight: 1.6, color: 'var(--muted-foreground)' }}>{d}</p>
+    </div>)}
+
+    <div style={{ gridColumn: 'span 12', background: 'var(--card)', borderRadius: 24, padding: 48, display: 'grid', gridTemplateColumns: 'repeat(12,minmax(0,1fr))', columnGap: 48, rowGap: 40 }}>
+      <div style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+        <h3 style={H3}>Worked example: you and {SAM.n}</h3>
+        <p style={{ ...MUTED, marginTop: 12 }}>“You” is {ME.n}’s sample profile. Every number here comes from the same code the app runs.</p>
+        <LT.MatchScore value={SAM.s} showLink={false} style={{ marginTop: 'auto', paddingTop: 32 }} />
+      </div>
+      <div style={{ gridColumn: '6 / span 7', display: 'grid', gridTemplateRows: `repeat(${Math.ceil(vs.length / 2)},auto)`, gridAutoFlow: 'column', gridAutoColumns: 'minmax(0,1fr)', columnGap: 40, rowGap: 24 }}>
+        {SAM.parts.map(bar)}
+      </div>
+      <div style={{ gridColumn: 'span 12', padding: '20px 24px', borderRadius: 12, background: 'var(--sand)', display: 'flex', alignItems: 'baseline', gap: 24, fontSize: 15, color: 'var(--ink)', fontVariantNumeric: 'tabular-nums' }}>
+        <span style={{ fontSize: 13, color: 'var(--muted-foreground)', whiteSpace: 'nowrap' }}>Match %</span>
+        <span>({vs.join(' + ')}) ÷ {vs.length} = {+mean.toFixed(2)} → <span style={{ fontWeight: 500 }}>{SAM.s}%</span></span>
+      </div>
+    </div>
+  </div>;
 }
 
 function BrandStatement() {
@@ -230,7 +324,12 @@ function FAQ() {
       </div>
       <div style={{ gridColumn: '5 / span 8' }}>
         <LT.Accordion defaultOpen={0} items={[
-          { q: 'Is my match % made by AI?', a: 'No. It’s a weighted comparison of your answers. AI only writes the explanation, and matching still works with AI off.' },
+          { q: 'Is my match % made by AI?', a: `No. It’s plain math on your ${N} quick-tap answers, identical with AI on or off. AI only writes the explanations, and voice answers never change the number.` },
+          { q: 'How is my match % calculated?', a: <>Each answer becomes a real quantity: clock hours, times a week, decibels. On each question, agreement is 100% when you match and falls in a straight line to 0% at that question’s full-clash gap. Your match % is the average of the {N}, and every question counts the same.
+            <div style={{ marginTop: 16 }}><LT.LinkUnderline size={13} href="#how-it-works">See the table and a worked example</LT.LinkUnderline></div></> },
+          { q: 'Why compare guests and cleaning by ratio?', a: `Going from no guests to one or two a month changes a home more than going from eight to nine, so counts are compared by ratio (a log scale), not by difference. Guests ${G[0]} vs ${G[1]} a month scores ${guests(0, 1)}%, while ${G[3]} vs ${G[4].toLowerCase()} scores ${guests(3, 4)}%.` },
+          { q: 'What do dealbreakers do?', a: 'They filter people out before any scoring, both ways: your dealbreakers against their answers, and theirs against yours. “No smoking/vaping indoors” rules out smoking sometimes or often inside. A pet allergy, or needing a pet-free home, rules out having a pet or planning to get one. Filtered people never appear, so a dealbreaker can’t be outweighed by other answers.' },
+          { q: 'Why does sleep noise only cost half?', a: `Snoring or grinding can be medical, so we never rule anyone out for it. If exactly one of you reports sleep noise, that question scores ${HALF}%, not 0%.` },
           { q: 'Why can’t I see photos of people?', a: 'Photos unlock after you both opt in, so matches stay about habits.' },
           { q: 'Where do the listings come from?', a: 'Public listings, collected and linked back to the source with the date we saw them.' },
           { q: 'What if the AI gets something wrong?', a: 'It only suggests questions and quotes both answers word for word. You decide what to send.' },

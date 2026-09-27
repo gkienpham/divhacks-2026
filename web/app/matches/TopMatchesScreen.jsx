@@ -3,7 +3,7 @@
 import React from 'react';
 import * as MG from '@/components/rm';
 import { NAV, EmptyState, Sk } from '@/components/shared';
-import { ME, QUEUE, SHORT, PEOPLE, TAGS, REASONS, SCORES } from '@/lib/sample-data';
+import { ME, QUEUE, SHORT, PEOPLE } from '@/lib/sample-data';
 import SwipeView, { useMatchHref } from './SwipeView';
 
 export function MatchSkeleton() {
@@ -17,21 +17,21 @@ export function MatchSkeleton() {
 function GridView({ list, setList }) {
   const href = useMatchHref();
   return <div style={{ marginTop: 56, display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 16 }}>
-    {PEOPLE.map(([ini, n], i) => { const on = list.some(x => x[1] === n); return <article key={n} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 24, padding: 24, display: 'flex', flexDirection: 'column' }}>
+    {PEOPLE.map((p, i) => { const { i: ini, n } = p, on = list.some(x => x[1] === n); return <article key={n} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 24, padding: 24, display: 'flex', flexDirection: 'column' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
         <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.18em', color: 'var(--brand)', fontVariantNumeric: 'tabular-nums', paddingTop: 4, width: 22 }}>{String(i + 1).padStart(2, '0')}</span>
         <MG.InitialsAvatar initials={ini} name={n} size={48} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <a href={href(n.toLowerCase())} style={{ display: 'block', fontSize: 18, fontWeight: 500, letterSpacing: '-0.01em', color: 'var(--ink)', textDecoration: 'none' }}>{n}</a>
+          <a href={href(p.id)} style={{ display: 'block', fontSize: 18, fontWeight: 500, letterSpacing: '-0.01em', color: 'var(--ink)', textDecoration: 'none' }}>{n}</a>
           <MG.VerifiedBadge style={{ marginTop: 6 }} />
         </div>
-        <MG.MatchScore value={SCORES[i]} showLink={false} style={{ zoom: 44 / 60, textAlign: 'right' }} />
+        <MG.MatchScore value={p.s} showLink={false} style={{ zoom: 44 / 60, textAlign: 'right' }} />
       </div>
-      <div style={{ marginTop: 20, display: 'flex', flexWrap: 'wrap', gap: 6 }}>{TAGS[i % 5].map(t => <MG.HabitTag key={t}>{t}</MG.HabitTag>)}</div>
-      <p style={{ margin: '16px 0 0', fontSize: 14, lineHeight: 1.6, color: 'var(--muted-foreground)' }}>{REASONS[i % 5]}</p>
+      <div style={{ marginTop: 20, display: 'flex', flexWrap: 'wrap', gap: 6 }}>{p.tags.map(t => <MG.HabitTag key={t}>{t}</MG.HabitTag>)}</div>
+      <p style={{ margin: '16px 0 0', fontSize: 14, lineHeight: 1.6, color: 'var(--muted-foreground)' }}>{p.reason}</p>
       <div style={{ marginTop: 'auto', paddingTop: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <MG.ButtonOutline size="sm" arrow={!on} icon={on ? 'check' : undefined} onClick={() => setList(s => on ? s.filter(x => x[1] !== n) : s.length < 5 ? [...s, [ini, n]] : s)}>{on ? 'Shortlisted' : 'Shortlist'}</MG.ButtonOutline>
-        <MG.LinkUnderline href={href(n.toLowerCase())} size={13}>Open match</MG.LinkUnderline>
+        <MG.LinkUnderline href={href(p.id)} size={13}>Open match</MG.LinkUnderline>
       </div>
     </article>; })}
   </div>;

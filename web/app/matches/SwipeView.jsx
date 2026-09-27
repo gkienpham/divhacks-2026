@@ -38,7 +38,7 @@ function SwipeCard({ ai, p, covers }) {
     <Rule />
     <MLab>Why you matched</MLab>
     <div style={{ marginTop: 20, display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', columnGap: 32, rowGap: 22 }}>
-      {p.bars.map(([l, ic, v, y, t]) => <MS.HabitBar key={l} label={l} icon={ic} value={v} you={y} them={t} themName={p.n} />)}
+      {p.parts.map(x => <MS.HabitBar key={x.k} label={x.label} icon={x.icon} value={x.v} you={x.you} them={x.them} themName={p.n} />)}
     </div>
     {ai && <><Rule />
       <MS.AISummaryTag />
@@ -109,7 +109,7 @@ export default function SwipeView({ ai, covers = {}, list, setList }) {
   return <div style={{ marginTop: 56, display: 'grid', gridTemplateColumns: 'repeat(12,minmax(0,1fr))', columnGap: 48, alignItems: 'start' }}>
     <aside style={{ gridColumn: '1 / span 3', ...card }}>
       <div style={{ fontSize: 18, fontWeight: 500, letterSpacing: '-0.01em', color: 'var(--ink)' }}>How your score works</div>
-      <p style={{ margin: '12px 0 0', fontSize: 14, lineHeight: 1.6, color: 'var(--muted-foreground)' }}>Dealbreakers filter first. Then a weighted comparison of your 10 answers; bedtime and cleaning count most. Voice answers add at most 15%.</p>
+      <p style={{ margin: '12px 0 0', fontSize: 14, lineHeight: 1.6, color: 'var(--muted-foreground)' }}>Dealbreakers filter first. Then each of your 10 answers is compared in real units (hours, times a week, decibels) and your match % is the average agreement, every question counting equally. AI and voice answers never change it.</p>
       <MS.LinkUnderline href="/#how-it-works" size={13} style={{ marginTop: 16 }}>How it’s scored</MS.LinkUnderline>
     </aside>
     <div style={{ gridColumn: '4 / span 6', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>

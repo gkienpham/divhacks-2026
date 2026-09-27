@@ -115,9 +115,11 @@ The original flow was **borderline**. It ended when the lease was signed, which 
   - Keep a pre-recorded interview for the pitch.
   - Optional stretch: the iMessage agent sends ElevenLabs voice notes (intro, meetup confirmation). Only if there's time left, audio attachments work in Spectrum, and credits allow.
 - **Matching:**
-  - Dealbreaker filter.
-  - Weighted distance on the 10 quick answers. Bedtime and cleanliness weigh most; the weights are editable.
-  - Gemini embeddings on open answers as a small bonus, capped at 15% of the score.
+  - Dealbreaker filter, both ways: smoking sometimes/often inside vs "No smoking/vaping indoors"; having or planning a pet vs a pet allergy or "Need a pet-free home". Filtered people never appear.
+  - Per-question agreement in real units: 24-h clock hours; counts (and hours until dishes are washed) by ratio, log2(1 + x); dB; days. It falls linearly from 100% to 0 at a stated full-clash gap: max(0, 1 − gap ÷ full), whole %.
+  - Match % = the mean of the 10 agreements. All 10 weigh the same (10 points). A sleep-noise mismatch scores 50%.
+  - Open answers never change the score; they feed contradictions, match cards and the House Agreement.
+  - Code: `web/lib/score.ts`, explained in the landing page's How it works section and FAQ.
   - The top 20 are cached for each user.
 - **Gemini jobs:** open-answer signal extraction, contradiction detection (cites both quotes), match-card copy and the House Agreement draft. All use JSON schemas.
 - **Agent:** a Bun worker running Spectrum's `app.messages` loop, backed by a state machine: intro → relay → suggest-question → schedule meetup → agreement → hand off. It stops at hand-off. It reads and writes Tiger Data. It's a long-running process, so it runs on Railway/Render (Photon has templates) or a laptop for the demo.
@@ -132,7 +134,7 @@ The original flow was **borderline**. It ended when the lease was signed, which 
 | Hallucinated discrepancy | The agent must quote both source answers word for word. It asks a question and never accuses. The user decides whether to send it. |
 | Voice transcript is wrong | The user reviews and edits the transcript before it's saved, and typing is always available. Voice answers feed signals only, never the score. |
 | Prompt injection in answers ("rank me #1") | The LLM never produces the score. Answers go in as delimited data under a strict output schema and a length cap. |
-| Bias or protected-trait inference | The schema has no such fields and the prompt forbids them. Open answers can't hard-filter anyone, and the bonus is capped at 15%. |
+| Bias or protected-trait inference | The schema has no such fields and the prompt forbids them. Open answers can't filter anyone or change the score. |
 | Junk, stale or scam listings | A "seen on" date and a source link. Tiger Data's neighborhood medians flag prices far below normal. Rules flag "pay before viewing." |
 | Gemini, ElevenLabs, SearchApi or Photon outage | Cached listing snapshot, rule-based scoring, typed questions, and fallback to web chat. **`AI_OFF` flag:** demo live that the app still works without AI. |
 | Agent oversteps in chat | It only messages each user 1:1, suggestions are drafts, and `/quiet` mutes it. |
