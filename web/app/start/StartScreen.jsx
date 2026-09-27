@@ -34,14 +34,9 @@ function SignInScreen({ name, setName, email, setEmail, next }) {
   </section>;
 }
 
-// The pre-screen being edited. School, lines and date are kept while their chip is off, so turning it back on restores them.
-const draft = p => ({
-  answers: Object.fromEntries(PRESCREEN.map(g => [g.id, p?.answers?.[g.id] ?? g.def])),
-  school: p?.school ?? 'Columbia University',
-  lines: p?.lines ?? ['1', 'A'],
-  moveDate: p?.moveDate ?? '',
-  dealbreakers: p?.dealbreakers ?? [DEALBREAKERS[0]],
-});
+// The pre-screen being edited, blank every time: nothing is preselected. School, lines and date are kept while their chip
+// is off, so turning it back on restores them.
+const blank = () => ({ answers: Object.fromEntries(PRESCREEN.map(g => [g.id, []])), school: '', lines: [], moveDate: '', dealbreakers: [] });
 // → the Prescreen we save (lib/questions.ts): the optional fields only when their chip is on.
 const toPrescreen = ({ answers, school, lines, moveDate, dealbreakers }) => ({
   answers, dealbreakers,
@@ -66,9 +61,9 @@ function PreScreenScreen({ rooms, ps, setPs, back, save, saving, failed }) {
   const v = ps.answers;
   const set = (k, val) => setPs(s => ({ ...s, [k]: val }));
   const answer = id => val => setPs(s => ({ ...s, answers: { ...s.answers, [id]: val } }));
-  const band = budgetBand(v.budget[0]), apt = v.apt[0];
-  const fit = rooms.filter(([p, b]) => p >= band.min && (band.max == null || p <= band.max) && (apt === 'Any' || (apt === '3+ bed' ? b >= 3 : b === 2))).length;
-  const ready = !(v.move[0] === 'Pick a date' && !ps.moveDate);
+  const band = budgetBand(v.budget[0]), apt = v.apt[0] ?? 'Any'; // unanswered = no filter yet
+  const fit = rooms.filter(([p, b]) => (!band || (p >= band.min && (band.max == null || p <= band.max))) && (apt === 'Any' || (apt === '3+ bed' ? b >= 3 : b === 2))).length;
+  const ready = PRESCREEN.every(g => v[g.id].length) && !(v.move[0] === 'Pick a date' && !ps.moveDate);
   const col = (arr, off) => <div style={{ minWidth: 0 }}>{arr.map((g, i) => <Group key={g.id} first={i === 0} n={off + i + 1} g={g} val={v[g.id]} set={answer(g.id)}>
     {g.id === 'where' && (v.where.includes('Near my school/work') || v.where.includes('Anywhere near transit')) && <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 16 }}>
       {v.where.includes('Near my school/work') && <SI.Field style={{ width: 240, flex: 'none' }} value={ps.school} onChange={e => set('school', e.target.value.slice(0, 80))} placeholder="School or workplace" />}
@@ -102,13 +97,13 @@ function PreScreenScreen({ rooms, ps, setPs, back, save, saving, failed }) {
   </section>;
 }
 
-// `me` = { name, email, prescreen } of a returning user, to prefill both steps.
+// `me` = { name, email } of a returning user, to prefill the first step.
 export default function StartScreen({ rooms, me }) {
   const router = useRouter();
   const [step, setStep] = React.useState('signin');
   const [name, setName] = React.useState(me?.name ?? '');
   const [email, setEmail] = React.useState(me?.email ?? '');
-  const [ps, setPs] = React.useState(() => draft(me?.prescreen));
+  const [ps, setPs] = React.useState(blank);
   const [saving, setSaving] = React.useState(false);
   const [failed, setFailed] = React.useState(false);
   const go = s => { setStep(s); window.scrollTo(0, 0); };
@@ -118,7 +113,7 @@ export default function StartScreen({ rooms, me }) {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: name.trim(), email: email.trim(), prescreen: toPrescreen(ps) }), // '' clears a saved email
     }).catch(() => null);
-    if (res?.ok) router.push('/profile'); // stays disabled until /profile loads
+    if (res?.ok) router.push('/profile?fresh'); // stays disabled until /profile loads
     else { setSaving(false); setFailed(true); }
   };
   return <div style={{ minWidth: 1440, minHeight: '100vh', background: 'var(--background)' }}>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { LinkUnderline } from '../actions/LinkUnderline.jsx';
-export function MatchScore({ value = 86, caption = 'match · math, not AI', linkLabel = "How it's scored", onHowScored, showLink = true, onDark = false, style }) {
+export function MatchScore({ value = 86, caption = 'match · metric', linkLabel = "How it's scored", onHowScored, showLink = true, onDark = false, style }) {
   return <div style={{ fontFamily: 'var(--font-sans)', ...style }}>
     <div style={{ display: 'flex', alignItems: 'flex-start', color: onDark ? '#fff' : 'var(--ink)' }}>
       <span style={{ fontSize: 60, fontWeight: 500, lineHeight: 1, letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums' }}>{value}</span>
