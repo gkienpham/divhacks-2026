@@ -6,8 +6,24 @@ Scope: desktop only (1440px). It covers the landing page and the MVP demo path i
 
 ## How to use
 1. **Screenshots.** Reference screenshots of the template are in `~/Downloads/roomme-design-ref/`. They're kept out of the repo because they're third-party images. Claude Design can't reliably take another site's URL as a style reference, so attach screenshots instead.
-2. **P0.** Open Claude Design, start a project called **Roomme**, attach all the screenshots, and paste **P0**. When the component sheet passes its "Done when" checks, publish it as the **Roomme** design system so later work reuses it.
-3. **P1–P7.** Paste these **in order, in the same project**. Claude builds each screen with the earlier ones in context.
+2. **P0 goes into a new design system, not a project.** Fill in the setup form like this:
+
+   | Field | What to put |
+   |---|---|
+   | Company name and blurb | The blurb below |
+   | Link code from GitHub | Leave empty for now. The repo has no frontend yet; link it once the Next.js app exists. |
+   | Link code from your computer | Leave empty |
+   | Upload a .fig file | Leave empty |
+   | Add fonts, logos and assets | All 12 screenshots from `~/Downloads/roomme-design-ref/`. No font files are needed; DM Sans and Caveat are Google Fonts. |
+   | Any other notes? | The whole P0 prompt body, from "Build a design system called 'Roomme'…" to the end of its house rules. If the box has a length limit, paste the COLOR TOKENS, TYPE, SHAPE AND DEPTH and LAYOUT sections here and send the component list in the chat afterward. |
+
+   Blurb:
+   ```text
+   Roomme (roomme.tech): a desktop web app that matches NYC renters (students and early-career newcomers) with compatible roommates based on daily habits like sleep, dishes, guests and noise. It flags mismatches before anyone signs a lease and ends by handing the pair off to the listing. Look and feel: based on the Wayfare Travels template (screenshots attached).
+   ```
+
+   When the component sheet passes P0's "Done when" checks, **publish** the design system. New projects then use it automatically.
+3. **P1–P7 go into one new project.** Start a project called **Roomme** from the Claude Design home screen and paste these **in order, in that same project**. Claude builds each screen with the earlier ones in context.
    - For small fixes, click the element and leave an inline comment. Direct edits on the canvas don't use tokens.
    - Only move on once the current prompt's "Done when" list passes.
 4. **Handoff.** P7 ends with the handoff. Use **Send to local coding agent** so Claude Code gets the bundle in this repo.
