@@ -91,7 +91,7 @@ export function VoiceScreen({ initial, sample: wasSample, onDone, frame }) {
         {voice && <>
           <div style={{ gridColumn: '5 / span 4', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 40 }}>
             <div style={{ position: 'relative', width: 216, height: 216, display: 'grid', placeItems: 'center' }}>
-              <svg width="216" height="216" aria-hidden="true" style={{ position: 'absolute', inset: 0, transform: 'rotate(-90deg)' }}>
+              <svg width="216" height="216" aria-hidden="true" style={{ position: 'absolute', inset: 0, transform: 'rotate(-90deg)', pointerEvents: 'none' }}>
                 <circle cx="108" cy="108" r={R} fill="none" stroke="rgba(255,255,255,.12)" strokeWidth="1.5" />
                 <circle cx="108" cy="108" r={R} fill="none" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeDasharray={C} strokeDashoffset={C * (1 - left / SECS)} style={{ transition: 'stroke-dashoffset 1s linear' }} />
               </svg>
