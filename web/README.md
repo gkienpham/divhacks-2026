@@ -22,11 +22,12 @@ Anonymous until OAuth: an httpOnly `rm_uid` cookie holds `profiles.session_token
 - `lib/score.ts`: the match % (dealbreakers both ways, per-question agreement in real units, mean of 10), the 10 questions, bars, rule-based click/clash and habit tags. Pure TS, no AI; `lib/questions.ts` re-exports its `QUESTIONS` as `QUICK`. `lib/signals.ts`: contradictions and the agreement draft.
 - `lib/profiles.ts`, `lib/matches.ts`: people and pairs. Sample profiles reciprocate when the score is ≥ 70 (`LIKE_BACK`); "Simulate … confirming" exists only for them.
 - `lib/ai.ts`: Gemini REST with a JSON schema, 8 s timeout, cached per viewer in `matches.reasons.ai`; null on any failure.
-- API: `GET /api/me`, `POST /api/profile`, `POST /api/saved`, `GET|POST /api/matches/[id]`, `GET /api/voice/session`. Bodies are validated against `lib/questions.ts` (400 on anything unknown).
+- API: `GET /api/me`, `POST /api/profile`, `POST /api/saved`, `GET|POST /api/matches/[id]`, `GET /api/matches/[id]/pdf` (the House Agreement PDF), `GET /api/voice/session`. Bodies are validated against `lib/questions.ts` (400 on anything unknown).
 
 Checks, from `web/`:
 ```bash
 npx tsx lib/score.check.ts                                                      # match-% math, no DB
+npx tsx lib/agreement-pdf.check.ts [out-dir]                                    # House Agreement PDF, no DB
 npx tsx --env-file=.env.local --conditions=react-server scripts/seed.ts        # 150 synthetic profiles (is_synthetic = true)
 npx tsx --env-file=.env.local --conditions=react-server lib/listings.check.ts
 npx tsx --env-file=.env.local --conditions=react-server lib/matches.check.ts   # profile → top matches → like → meetup → agreement → lock
