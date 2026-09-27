@@ -4,7 +4,7 @@ DivHacks 2026 (Columbia, Sep 26–27): roommate matching and renter support for 
 
 ## Stack
 - **Web:** Next.js (TypeScript) on Vercel.
-- **Database:** Tiger Data (Postgres + TimescaleDB). Use one database only; don't add Supabase or Mongo. Hypertables are `listing_snapshots` and `house_events`.
+- **Database:** Tiger Data (Postgres + TimescaleDB). Use one database only; don't add Supabase or Mongo. The hypertable is `listing_snapshots`, with the `rent_by_area_daily` continuous aggregate.
   - Service `bj9teo40nn`. It has no pooler, so keep connection pools tiny.
   - Run ad-hoc SQL with `tiger db query bj9teo40nn -c "..."`; there's no local psql.
   - The connection string is `DATABASE_URL` in `.env`.
@@ -23,6 +23,7 @@ DivHacks 2026 (Columbia, Sep 26–27): roommate matching and renter support for 
 - **AI:** Gemini for open-answer signals, contradictions, match cards and the House Agreement. Always use JSON schemas.
 
 ## Rules
+- **Scope is matching only.** Roomme ends at the match and hand-off to the listing. Don't build post-move-in features (reminders, chores, house chat).
 - The compatibility score is **deterministic**. The LLM never produces it.
 - Keep the `AI_OFF` fallback working.
 - Match on habits only; never on protected traits.

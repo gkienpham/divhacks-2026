@@ -4,7 +4,7 @@
 
 Roommate matching + renter support for NYC. DivHacks 2026, **Live Better** track.
 
-Match NYC newcomers on how they actually live and catch mismatches before the lease. Then the same iMessage agent that matched you moves into your group chat to help keep the peace.
+Roomme matches NYC newcomers on how they actually live and catches mismatches before the lease. **Scope: matching only.** Roomme ends at the match and hand-off to the listing.
 
 **Stack:**
 

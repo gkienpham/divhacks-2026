@@ -1,5 +1,7 @@
 # Ideas: roommate matching + renter support (Live Better)
 
+> **Historical brainstorm.** Roomme's scope is now **matching only** (see [PROJECT.md](PROJECT.md)). The post-move-in ideas below are out of scope.
+
 **Track text:** "The grind of daily NYC life, optimized. Everything besides transportation. Helping one person's day run smoother."
 
 **Positioning.** Roomi, SpareRoom, Diggz and Roomster already match roommates. Matching alone is a marketplace, and a judge will ask "how is this different?" Our answer is what happens **after** the match: the app keeps a shared NYC apartment running. Pitch line: *find someone you can live with, then actually live well with them.*

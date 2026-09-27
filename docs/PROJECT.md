@@ -2,7 +2,9 @@
 
 **Name:** Roomme, at [roomme.tech](https://roomme.tech) (see §4). **Track:** Live Better. **Also entering:** Photon (iMessage via Spectrum), MLH Gemini, MLH Tiger Data, MLH ElevenLabs, MLH .Tech domain.
 
-**Pitch:** A bad roommate is a daily tax on your sleep, your kitchen and your peace. We match NYC newcomers on how they actually live, catch mismatches before anyone signs a lease, and then the same iMessage agent that matched you moves into your group chat to help keep the peace.
+**Pitch:** A bad roommate is a daily tax on your sleep, your kitchen and your peace. Roomme matches NYC newcomers on how they actually live and catches the mismatches before anyone signs a lease.
+
+**Scope: matching only.** Roomme ends when a pair is matched and handed off to the listing. There are no post-move-in features: no reminders, chores or house chat.
 
 Judging (Devpost): Concept 30%, Functionality 30%, Wow 20%, UX 10%, Value to Community 10%. The earlier brainstorm is in [IDEAS.md](IDEAS.md).
 
@@ -34,12 +36,13 @@ Judging (Devpost): Concept 30%, Functionality 30%, Wow 20%, UX 10%, Value to Com
 ### 2. Is it Live Better?
 The original flow was **borderline**. It ended when the lease was signed, which makes it a housing-search product, closer to Hack the City's "housing." Live Better is about "helping one person's day run smoother."
 
-**The fix is also the originality hook:** *the same iMessage agent that matched you moves into your group chat.* After move-in it:
-- sends the House Agreement
-- sends trash-night and chore reminders (DSNY schedule by address)
-- sends heads-ups about guests or quiet hours
+**Decision: matching only.** Roomme doesn't follow the pair after move-in. The Live Better case rests on *prevention*: a mismatched roommate is a daily tax on sleep, cleanliness and noise for 12 months. Matching on daily routines (bedtime, dishes, guests, noise) is what makes "one person's day run smoother." Say that out loud in the pitch, since judges may still see this as housing search.
 
-The pitch: a bad roommate is a *daily* tax on sleep, cleanliness and noise. We prevent that before the lease and keep the peace after it. That line also makes Photon fit naturally.
+**Originality now rests on the matching itself:**
+- a voice interview instead of forms
+- a deterministic, explained score
+- contradiction detection that surfaces the awkward question before the lease
+- the fair-price badge on each listing
 
 ### 3. User group and pain point
 - **User:** students and early-career newcomers to NYC (interns, grad students, new grads) who have no local network. They want a room in a shared 2–3 bedroom place at about $1.5–2.2k per room.
@@ -50,7 +53,7 @@ The pitch: a bad roommate is a *daily* tax on sleep, cleanliness and noise. We p
 ### 4. Name
 **Roomme**: "room me," with a nod to "roomie." The site is [roomme.tech](https://roomme.tech), which is also the MLH .Tech domain entry.
 - **Write it as "Roomme" everywhere.** The double m is easy to misread, so keep the spelling consistent across the logo, the deck and Devpost.
-- **Expect a comparison with Roomi**, an existing roommate app with a similar name. Our answer is what Roomi doesn't do: habit-based matching and the iMessage agent that keeps the peace after move-in.
+- **Expect a comparison with Roomi**, an existing roommate app with a similar name. Our answer is what Roomi doesn't do: habit-based matching from a voice interview, explained scores, and contradiction checks before you commit.
 
 ### 5. Product flow v2
 1. **Pre-screen (30 s):** budget, move-in month, lease length, neighborhoods or commute anchor, dealbreakers (smoking, pets or allergies).
@@ -68,8 +71,7 @@ The pitch: a bad roommate is a *daily* tax on sleep, cleanliness and noise. We p
 5. **Shortlist 5.** Chat opens only on **mutual** interest.
 6. **iMessage concierge (Photon/Spectrum):** the agent introduces the pair, relays messages with numbers hidden, and privately suggests a question for each flagged discrepancy.
 7. **Meetup:** the agent proposes 3 times from both people's free windows plus a public spot near the listing, and sends safety tips.
-8. **Lock and hand off:** mutual confirmation, then Gemini drafts the House Agreement (quiet hours, guests, chores, bills, thermostat) and flags open questions. The listing locks for the pair, and the broker message is drafted.
-9. **After move-in:** the same agent runs trash and chore reminders and guest heads-ups. Every event is logged and feeds a "house health" chart.
+8. **Lock and hand off (the end of Roomme):** after mutual confirmation, Gemini drafts a one-page House Agreement to set expectations *before* signing (quiet hours, guests, chores, bills, thermostat) and flags open questions. The listing locks for the pair, the broker message is drafted, and the pair leaves for the source listing to apply.
 
 ### 6. Architecture
 - **Web:** Next.js (TypeScript) on Vercel. It's the same language as Spectrum.
@@ -79,7 +81,6 @@ The pitch: a bad roommate is a *daily* tax on sleep, cleanliness and noise. We p
     - the "fair price?" badge
     - price-drop alerts
     - the scam flag for prices far below the median
-  - Hypertable `house_events(time, household_id, type, …)`: chores done, reminders sent, guest notices. It feeds the "house health" chart, the strongest Live Better and time-series story.
 - **Listings: SearchApi Zillow engine** (`engine=zillow`, `listing_status=for_rent`, `rent_min`/`rent_max`, `beds_min`).
   - URL-encode the query (`--data-urlencode`).
   - The test call returned **41 listings per page**. Astoria 2+ bedrooms had 165 results over 4 pages.
@@ -112,14 +113,14 @@ The pitch: a bad roommate is a *daily* tax on sleep, cleanliness and noise. We p
   - Test the extraction pipeline with pasted transcripts, not live calls.
   - Seed profiles are generated as text only; never run them through voice.
   - Keep a pre-recorded interview for the pitch.
-  - Optional stretch: the iMessage agent sends ElevenLabs voice notes (intro, reminders). Only if there's time left, audio attachments work in Spectrum, and credits allow.
+  - Optional stretch: the iMessage agent sends ElevenLabs voice notes (intro, meetup confirmation). Only if there's time left, audio attachments work in Spectrum, and credits allow.
 - **Matching:**
   - Dealbreaker filter.
   - Weighted distance on the 10 quick answers. Bedtime and cleanliness weigh most; the weights are editable.
   - Gemini embeddings on open answers as a small bonus, capped at 15% of the score.
   - The top 20 are cached for each user.
 - **Gemini jobs:** open-answer signal extraction, contradiction detection (cites both quotes), match-card copy and the House Agreement draft. All use JSON schemas.
-- **Agent:** a Bun worker running Spectrum's `app.messages` loop, backed by a state machine: intro → relay → suggest-question → schedule → agreement → reminders. It reads and writes Tiger Data. It's a long-running process, so it runs on Railway/Render (Photon has templates) or a laptop for the demo.
+- **Agent:** a Bun worker running Spectrum's `app.messages` loop, backed by a state machine: intro → relay → suggest-question → schedule meetup → agreement → hand off. It stops at hand-off. It reads and writes Tiger Data. It's a long-running process, so it runs on Railway/Render (Photon has templates) or a laptop for the demo.
 - **Seed data:** 150 synthetic profiles generated by Gemini and labeled synthetic, plus real sign-ups from hackers at the event.
 - **Secrets:** `.env` (gitignored) holds `SEARCHAPI_KEY`, `DATABASE_URL` (plus `DIRECT_DATABASE_URL`; they're the same for now), `GEMINI_API_KEY`, the ElevenLabs key and the Photon project ID/secret. Never put a key in browser code.
 
@@ -147,9 +148,9 @@ The pitch: a bad roommate is a *daily* tax on sleep, cleanliness and noise. We p
 - mutual shortlist
 - iMessage agent intro plus one suggested discrepancy question plus meetup times
 - House Agreement
-- one post-move reminder in the same thread, logged to `house_events`
 
 **Cut:**
+- anything after the match: reminders, chores, house chat, bill splitting
 - live scraping or live API calls during the demo
 - Airbnb
 - payments
@@ -164,7 +165,7 @@ The pitch: a bad roommate is a *daily* tax on sleep, cleanliness and noise. We p
 - **0–2 h:** repo, Next.js, Tiger Cloud, keys (SearchApi ✓, Gemini, ElevenLabs, Photon). Spectrum "hello" reply working. Questions frozen.
 - **2–8 h:** SearchApi pull into Tiger Data, pre-screen and profile UI, scoring and seed profiles, ElevenLabs agent set up.
 - **8–14 h:** Gemini cards and contradiction detector, match and shortlist UI, voice interview → transcript → extraction, agent relay and suggestions.
-- **14–20 h:** meetup scheduling, House Agreement, reminder plus `house_events`, fair-price aggregate, `AI_OFF` flag, eval numbers.
+- **14–20 h:** meetup scheduling, House Agreement, fair-price badge and price history, `AI_OFF` flag, eval numbers.
 - **20 h → Sun 7 AM:** feature freeze. Then demo video (including the pre-recorded interview), deck, Devpost write-up and hacker-poll slide.
 
 **Roles:**
@@ -176,7 +177,7 @@ The pitch: a bad roommate is a *daily* tax on sleep, cleanliness and noise. We p
 ### 10. Rubric map
 | Criterion | Where it shows |
 |---|---|
-| Concept 30 | The matchmaker that moves into your group chat; the mismatch is caught before the lease. |
+| Concept 30 | Matching on how you actually live (voice interview, explained score, contradiction checks); the mismatch is caught before the lease. |
 | Functionality 30 | End-to-end live demo, graceful `AI_OFF` mode, eval numbers. |
 | Wow 20 | A judge does the voice interview live, and an iMessage flags a real contradiction. |
 | UX 10 | 30-second pre-screen, quick-tap profile, talking instead of typing, explained matches. |
@@ -188,7 +189,7 @@ The pitch: a bad roommate is a *daily* tax on sleep, cleanliness and noise. We p
 |---|---|
 | Photon | The chat |
 | MLH Gemini | Match cards |
-| MLH Tiger Data | Fair-price badge and house-health chart |
+| MLH Tiger Data | Fair-price badge and listing price history (`rent_by_area_daily`) |
 | MLH ElevenLabs | The onboarding interview |
 | MLH .Tech domain | roomme.tech |
 

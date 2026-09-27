@@ -86,20 +86,10 @@ create table if not exists matches (
   score       numeric not null,
   reasons     jsonb not null default '{}',       -- click / clash reasons, Gemini card copy
   status      text not null default 'suggested'
-              check (status in ('suggested', 'shortlisted', 'mutual', 'met', 'locked', 'moved_in', 'closed')),
+              check (status in ('suggested', 'shortlisted', 'mutual', 'met', 'locked', 'closed')),
   listing     text references listings (zpid),   -- the listing the pair locks
   created_at  timestamptz not null default now(),
   check (profile_a < profile_b),
   unique (profile_a, profile_b)
 );
 
--- Household life after move-in (a household = a moved-in match). Feeds the "house health" chart.
-create table if not exists house_events (
-  time      timestamptz not null default now(),
-  match_id  bigint not null references matches (id),
-  actor     bigint references profiles (id),
-  type      text not null,                      -- chore_done, reminder_sent, guest_notice, ...
-  payload   jsonb not null default '{}'
-);
-select create_hypertable('house_events', by_range('time', interval '7 days'), if_not_exists => true);
-create index if not exists house_events_match on house_events (match_id, time desc);
