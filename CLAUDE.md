@@ -5,6 +5,9 @@ DivHacks 2026 (Columbia, Sep 26–27): roommate matching and renter support for 
 ## Stack
 - **Web:** Next.js (TypeScript) on Vercel.
 - **Database:** Tiger Data (Postgres + TimescaleDB). Use one database only; don't add Supabase or Mongo. Hypertables are `listing_snapshots` and `house_events`.
+  - Service `bj9teo40nn`. It has no pooler, so keep connection pools tiny.
+  - Run ad-hoc SQL with `tiger db query bj9teo40nn -c "..."`; there's no local psql.
+  - The connection string is `DATABASE_URL` in `.env`.
 - **Listings:** SearchApi Zillow engine.
   - Pull offline, store in Tiger Data, and never call it live in the demo.
   - URL-encode params (`--data-urlencode`).
