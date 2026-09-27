@@ -19,8 +19,7 @@ export default function LockedScreen({ me, m, l }) {
   // Applying is the one step left, so it stays open.
   const steps = [['Matched', true], ['Meetup planned', !!m.meetup], ['Agreed', true], ['Locked', true], ['Apply on Zillow', false]];
   return <MFrame me={me}>
-    {/* Download PDF prints this page: keep the ink and sand fills, or white text prints on white. */}
-    <section style={{ padding: '24px 48px 112px', printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' }}>
+    <section style={{ padding: '24px 48px 112px' }}>
       <div className="rm-on-dark" style={{ position: 'relative', overflow: 'hidden', borderRadius: 28, background: 'var(--ink)', color: '#fff', minHeight: 520, padding: '88px 72px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', isolation: 'isolate' }}>
         <a href={listingHref(l.zpid)} aria-label={`${title} listing`} style={{ position: 'absolute', top: 0, bottom: 0, right: 0, left: '45%', zIndex: -2 }}><Photo src={l.images[0]} eager /></a>
         <div style={{ position: 'absolute', inset: 0, zIndex: -1, pointerEvents: 'none', background: 'linear-gradient(90deg,rgba(14,12,11,.92) 0%,rgba(14,12,11,.7) 50%,rgba(14,12,11,.45) 100%)' }} />
@@ -64,7 +63,7 @@ export default function LockedScreen({ me, m, l }) {
             {['You', p.name].map((n, i) => <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Check />{n} confirmed</span>)}
             <SampleNote p={p} />
           </div>
-          <div style={{ marginTop: 'auto', paddingTop: 24 }}><LK.ButtonOutline size="lg" arrow={false} icon="file-text" onClick={() => window.print()}>Download PDF</LK.ButtonOutline></div>
+          <div style={{ marginTop: 'auto', paddingTop: 24 }}><LK.ButtonOutline size="lg" arrow={false} icon="file-text" href={`/api/matches/${m.id}/pdf`}>Download PDF</LK.ButtonOutline></div>
         </article>
       </div>
 
