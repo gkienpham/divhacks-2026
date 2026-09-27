@@ -14,5 +14,5 @@ export default async function MatchPage({ params, searchParams }: PageProps<"/ma
     if (sp.step) redirect(`/matches/${m.id}`);
     return <DetailScreen me={me} m={m} aiOff={!aiOn()} />;
   }
-  return sp.step === "meetup" ? <MeetupScreen me={me} m={m} l={l} times={meetupSlots()} /> : <MutualScreen me={me} m={m} l={l} />;
+  return sp.step === "meetup" ? <MeetupScreen me={me} m={m} l={l} times={meetupSlots()} /> : <MutualScreen me={me} m={m} l={l} aiOff={!aiOn()} />;
 }

@@ -1,7 +1,7 @@
 import 'server-only';
 import { query } from './db';
-import { aiOn, matchCard, type AiCard } from './ai';
-import { usd } from './format';
+import { aiOn, chatAs, facilitatorQuestion, matchCard, type AiCard, type ChatLine } from './ai';
+import { bedsLabel, usd } from './format';
 import { getListing, getListingsByIds, listListings, type Listing } from './listings';
 import { initials, type Signals } from './profiles';
 import { BUDGETS, complete, type Prescreen, type QuickAnswers, type SeePref } from './questions';
@@ -166,6 +166,32 @@ async function load(meId: number, matchId: number) {
 export async function getMatch(meId: number, matchId: number): Promise<MatchView | null> {
   const x = await load(meId, matchId);
   return x ? (await views(x.me, [x.m], x.byId, 1))[0] ?? null : null;
+}
+
+// 6A chat, stateless: the page sends the whole chat and gets the next line. Gemini speaks only for sample profiles.
+// 'roomme' falls back to the rule-based questions (contradictions, then the agreement's open ones) with AI off or on failure.
+export async function chatTurn(meId: number, matchId: number, as: 'them' | 'roomme', chat: ChatLine[]): Promise<{ text: string; ai: boolean } | null> {
+  const x = await load(meId, matchId);
+  if (!x) return null;
+  const { me, them } = x;
+  const [view] = await views(me, [x.m], x.byId, 0);
+  if (!view.mutual) throw new MatchError(409, 'Not mutual yet');
+  if (!them.synthetic) throw new MatchError(409, 'Chat is for sample profiles only');
+  const text = (p: P) => ({ name: p.name, quick: p.quick ?? {}, transcript: p.transcript });
+  if (as === 'them') {
+    const l = view.listing;
+    const reply = await chatAs(text(them), text(me), chat, l && `the ${bedsLabel(l.beds)} in ${l.neighborhood}, ${usd(l.perRoom)} a room`);
+    if (!reply) throw new MatchError(502, `${them.name} couldn’t reply. Send another message to try again.`);
+    return { text: reply, ai: true };
+  }
+  const flags = [them, me].flatMap((p) => p.signals?.contradictions ?? contradictions(p.quick ?? {}, p.transcript ?? ''));
+  const rule = [...new Set([...flags.map((c) => c.question), ...(view.agreement?.open ?? []).filter((o) => !o.resolved).map((o) => o.q)])];
+  const ai = await facilitatorQuestion(text(me), text(them), [...rule, ...view.clash], chat);
+  if (ai) return { text: ai, ai: true };
+  const asked = new Set(chat.filter((c) => c.by === 'roomme').map((c) => c.text));
+  const next = rule.find((q) => !asked.has(q));
+  if (!next) throw new MatchError(409, 'Nothing left to ask');
+  return { text: next, ai: false };
 }
 
 const str = (v: unknown, max: number) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, max) : null);

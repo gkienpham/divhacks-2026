@@ -6,8 +6,9 @@ import * as MU from '@/components/rm';
 import { ListingCard } from '@/components/shared';
 import { street } from '@/lib/format';
 import { MFrame, Tile, MH2, SampleNote, pairHref, usePair, ErrorLine } from './parts';
+import { Chat } from './Chat';
 
-export function MutualScreen({ me, m, l }) {
+export function MutualScreen({ me, m, l, aiOff }) {
   const p = m.other;
   const [next, href] = m.status === 'locked' ? ['Open the hand-off', `/locked/${m.id}`]
     : m.meetup ? ['House agreement', pairHref(`/agreement/${m.id}`, l)]
@@ -26,6 +27,7 @@ export function MutualScreen({ me, m, l }) {
           </div>
         </React.Fragment>)}
       </div>
+      {p.synthetic && <Chat me={me} m={m} aiOff={aiOff} />}
       {l && <div style={{ marginTop: 48, width: 560, textAlign: 'left' }}><ListingCard l={l} height={300} eager /></div>}
       {m.meetup && <p style={{ margin: '28px 0 0', fontSize: 14, color: 'var(--muted-foreground)' }}>Meetup: {m.meetup.format.toLowerCase()}, {m.meetup.time}</p>}
       <MU.ButtonInk size="lg" href={href} style={{ marginTop: 32 }}>{next}</MU.ButtonInk>
