@@ -1,41 +1,63 @@
 "use client";
-// /profile: 3A see-your-roommate → 3B quick-tap ×10 → 3C voice → 3D review → /matches.
-// All state stays in this component; nothing is sent to a server yet.
+// /profile: 3A see-your-roommate → 3B quick-tap ×10 → 3C in your words → 3D review → /matches.
+// Saves as it goes (POST /api/profile): 3A on Continue, 3B on each answer, the transcript only from 3D, after review.
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { SeeScreen, QuickTapScreen, Q } from './HabitScreens';
-import { VoiceScreen, ReviewScreen } from './VoiceScreens';
+import { QUICK } from '@/lib/questions';
+import { SeeScreen, QuickTapScreen } from './HabitScreens';
+import { VoiceScreen, ReviewScreen, FULL } from './VoiceScreens';
 
-const GUESTS = Q.findIndex(q => q.k === 'guests');
+// What /api/profile accepts: sleepNoiseOther only with "Other" picked, and no empty multi answer (missing = skipped).
+function clean({ sleepNoiseOther, ...q }) {
+  if (q.sleepNoise && !q.sleepNoise.length) delete q.sleepNoise;
+  const other = sleepNoiseOther?.trim();
+  return other && q.sleepNoise?.includes('Other') ? { ...q, sleepNoiseOther: other } : q;
+}
+const post = body => fetch('/api/profile', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
+  .then(r => r.ok, () => false);
+const gap = quick => QUICK.findIndex(q => !(q.k in quick));
 
-export default function ProfileFlow({ ai }) {
+// see/quick/transcript: the saved profile. A returning user picks up at the first thing missing, or at the top once done.
+export default function ProfileFlow({ ai, see: savedSee, quick: savedQuick, transcript: savedTranscript }) {
   const router = useRouter();
-  const [step, setStep] = React.useState('see'); // see | quick | voice | review
-  const [see, setSee] = React.useState(null);
-  const [qi, setQi] = React.useState(0);
-  const [answers, setAnswers] = React.useState({});
-  const [other, setOther] = React.useState('');
+  const [step, setStep] = React.useState(() => savedTranscript || !savedSee ? 'see' : gap(savedQuick) < 0 ? 'voice' : 'quick'); // see | quick | voice | review
+  const [qi, setQi] = React.useState(() => Math.max(0, gap(savedQuick)));
+  const [see, setSee] = React.useState(savedSee);
+  const [answers, setAnswers] = React.useState(savedQuick);
+  const [transcript, setTranscript] = React.useState(savedTranscript);
+  const [sample, setSample] = React.useState(savedTranscript === FULL);
+  const [voiced, setVoiced] = React.useState(false); // 3D offers Re-record for a voice transcript, Back otherwise
   const [ret, setRet] = React.useState(false); // opened from the 3D self-check: return there after one answer
-  const [transcript, setTranscript] = React.useState('');
-  const [demo, setDemo] = React.useState(false);
+  const [failed, setFailed] = React.useState(false);
+  const queue = React.useRef(Promise.resolve(true));
   React.useEffect(() => { window.scrollTo(0, 0); }, [step, qi]);
+
+  // One request at a time, so an older save can't land after a newer one. Resolves to whether it saved.
+  const save = body => (queue.current = queue.current.then(() => post(body)).then(ok => { setFailed(!ok); return ok; }));
+  const everything = () => ({ ...(see && { see }), quick: clean(answers), ...(step === 'review' && { transcript }) });
+  const frame = { failed, onExit: () => save(everything()).then(ok => ok && router.push('/')) };
 
   // Absolute targets, so a double tap during the advance delay can't skip a question.
   const toQ = i => {
     if (ret) { setRet(false); setStep('review'); }
     else if (i < 0) setStep('see');
-    else if (i >= Q.length) setStep('voice');
+    else if (i >= QUICK.length) setStep('voice');
     else setQi(i);
   };
 
-  if (step === 'see') return <SeeScreen value={see} onChange={setSee} onNext={() => { setQi(0); setStep('quick'); }} />;
+  if (step === 'see') return <SeeScreen value={see} onChange={setSee} frame={frame} onNext={() => { save({ see }); setQi(0); setStep('quick'); }} />;
   if (step === 'quick') {
-    const k = Q[qi].k;
-    return <QuickTapScreen v={qi} sel={answers[k]} other={other} onOther={setOther}
-      onAnswer={a => setAnswers(s => ({ ...s, [k]: a }))} onNext={() => toQ(qi + 1)} onBack={() => toQ(qi - 1)} />;
+    const { k, multi } = QUICK[qi];
+    // Single-choice answers save on tap (then auto-advance); multi-choice and its "Other" text save on Continue or Skip.
+    return <QuickTapScreen v={qi} sel={answers[k]} other={answers.sleepNoiseOther} frame={frame}
+      onAnswer={a => { const next = { ...answers, [k]: a }; setAnswers(next); if (!multi) save({ quick: clean(next) }); }}
+      onOther={t => setAnswers(s => ({ ...s, sleepNoiseOther: t }))}
+      onNext={() => { if (multi) save({ quick: clean(answers) }); toQ(qi + 1); }} onBack={() => toQ(qi - 1)} />;
   }
-  if (step === 'voice') return <VoiceScreen onDone={(t, isDemo) => { setTranscript(t); setDemo(isDemo); setStep('review'); }} />;
-  return <ReviewScreen ai={ai} transcript={transcript} onEdit={setTranscript} demo={demo} guests={answers.guests}
-    onFinish={() => router.push('/matches')} onRerecord={() => setStep('voice')}
-    onUpdateGuests={() => { setRet(true); setQi(GUESTS); setStep('quick'); }} />;
+  if (step === 'voice') return <VoiceScreen initial={transcript} sample={sample} frame={frame}
+    onDone={(t, source) => { setTranscript(t); setSample(source === 'sample'); setVoiced(source === 'voice'); setStep('review'); }} />;
+  return <ReviewScreen ai={ai} quick={answers} transcript={transcript} sample={sample} voiced={voiced} frame={frame}
+    onEdit={t => { setTranscript(t); if (!t.trim()) setSample(false); }}
+    onSave={() => save(everything()).then(ok => ok && router.push('/matches'))} onBack={() => setStep('voice')}
+    onUpdate={k => { setRet(true); setQi(QUICK.findIndex(q => q.k === k)); setStep('quick'); }} />;
 }

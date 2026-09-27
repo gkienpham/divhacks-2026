@@ -3,7 +3,7 @@
 // (react-server makes `server-only` resolve to its empty build.)
 import assert from 'node:assert/strict';
 import { getPool } from './db';
-import { getListing, getListingStats, getNeighborhoods, getPriceHistory, listListings } from './listings';
+import { getListing, getListingsByIds, getListingStats, getNeighborhoods, getPrescreenRooms, getPriceHistory, listListings } from './listings';
 
 const ZS = 'https://photos.zillowstatic.com/';
 async function timed<T>(label: string, fn: () => Promise<T>): Promise<T> {
@@ -38,15 +38,24 @@ async function main() {
   assert.equal(page2.total, all.total);
   assert.equal(page2.listings[0].zpid, (await listListings({ pageSize: 10 })).listings[5].zpid);
 
-  // Trust distribution over everything.
+  // /listings "Load more" grows pageSize past the old 100 cap, up to the whole table.
+  const everything = await timed('listListings({pageSize: 10k})', () => listListings({ pageSize: 10_000 }));
+  assert.equal(everything.listings.length, all.total);
+  assert.equal((await listListings({ pageSize: 120 })).listings.length, 120);
+  assert.equal((await listListings({ pageSize: 24 * 2.5 + 0.7 })).listings.length, 60);
   const dist: Record<string, number> = {};
-  for (let page = 1; ; page++) {
-    const { listings } = await listListings({ page, pageSize: 100 });
-    if (!listings.length) break;
-    for (const l of listings) dist[String(l.trust)] = (dist[String(l.trust)] ?? 0) + 1;
-  }
+  for (const l of everything.listings) dist[String(l.trust)] = (dist[String(l.trust)] ?? 0) + 1;
   console.log('trust distribution', dist);
-  assert.equal(Object.values(dist).reduce((a, b) => a + b, 0), all.total);
+
+  const [a, b] = [everything.listings[500], everything.listings[3]];
+  const byIds = await timed('getListingsByIds', () => getListingsByIds([a.zpid, 'nope', b.zpid, a.zpid]));
+  assert.deepEqual(byIds, [a, b]);
+  assert.deepEqual(await getListingsByIds([]), []);
+
+  const rooms = await timed('getPrescreenRooms', () => getPrescreenRooms());
+  assert.equal(rooms.length, all.total);
+  const perRoom = everything.listings.map((l) => `${l.perRoom}:${l.beds}`).sort();
+  assert.deepEqual(rooms.map(([p, bd]) => `${p}:${bd}`).sort(), perRoom);
 
   const one = await timed('getListing', () => getListing(sample.zpid));
   assert.deepEqual(one, sample);

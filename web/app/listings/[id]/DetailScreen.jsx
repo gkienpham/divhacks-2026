@@ -3,9 +3,8 @@
 // Design copy with no data behind it (amenity chips, "groups interested", lister location) is left out.
 import React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import * as LD from '@/components/rm';
-import { NAV, useSaved } from '@/components/shared';
+import { NAV, Photo, useSaved } from '@/components/shared';
 import { usd, seenOn, day, street, bedsLabel } from '@/lib/format';
 
 function RangeBar({ l }) {
@@ -17,33 +16,34 @@ function RangeBar({ l }) {
       <div style={{ position: 'absolute', left: '50%', top: -8, width: 1, height: 22, background: 'rgba(14,12,11,.4)' }} />
       <div style={{ position: 'absolute', left: pos(l.perRoom), top: '50%', width: 14, height: 14, marginLeft: -7, marginTop: -7, borderRadius: 9999, background: 'var(--ink)', border: '2px solid var(--card)' }} />
     </div>
-    <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--muted-foreground)' }}><span>−15%</span><span>Median</span><span>+15%</span></div>
+    <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--muted-foreground)', fontVariantNumeric: 'tabular-nums' }}><span>−15%</span><span>Median of {l.medianN} listings</span><span>+15%</span></div>
   </div>;
 }
 
-function Sparkline({ history, l }) {
-  const first = history[0], last = history[history.length - 1];
+// Our own snapshots of the listing. One snapshot is one dated price: no line until there are two.
+function PriceHistory({ history, l }) {
+  const snaps = history.length ? history : [{ time: l.firstSeen, price: l.price }];
+  const last = snaps[snaps.length - 1];
   const w = 360, h = 56;
-  const ps = history.map(p => p.price), lo = Math.min(...ps), hi = Math.max(...ps);
-  const pts = history.map((p, i) => [i / Math.max(1, history.length - 1) * w, hi === lo ? h / 2 : (1 - (p.price - lo) / (hi - lo)) * h]);
-  return <div>
-    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)' }}>Price history (from our snapshots)</div>
-    {history.length > 1
-      ? <svg width="100%" viewBox={`0 -4 ${w} ${h + 8}`} style={{ display: 'block', marginTop: 14, overflow: 'visible' }}>
+  const ps = snaps.map(p => p.price), lo = Math.min(...ps), hi = Math.max(...ps);
+  const pts = snaps.map((p, i) => [i / Math.max(1, snaps.length - 1) * w, hi === lo ? h / 2 : (1 - (p.price - lo) / (hi - lo)) * h]);
+  return <div style={{ background: 'var(--card)', borderRadius: 24, padding: 28 }}>
+    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)' }}>Price history</div>
+    <div style={{ marginTop: 18, fontSize: 26, fontWeight: 500, letterSpacing: '-0.015em', color: 'var(--ink)', fontVariantNumeric: 'tabular-nums' }}>{l.isBuilding ? 'from ' : ''}{usd(last.price)}/mo</div>
+    <div style={{ marginTop: 6, fontSize: 13, color: 'var(--muted-foreground)' }}>Seen on {seenOn(last.time)}</div>
+    {snaps.length > 1 && <>
+      <svg width="100%" viewBox={`0 -4 ${w} ${h + 8}`} style={{ display: 'block', marginTop: 24, overflow: 'visible' }}>
         <polyline points={pts.map(p => p.join(',')).join(' ')} fill="none" stroke="var(--ink)" strokeWidth="1.5" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
         <circle cx={pts[pts.length - 1][0]} cy={pts[pts.length - 1][1]} r="3.5" fill="var(--ink)" />
       </svg>
-      : <p style={{ margin: '10px 0 0', fontSize: 13, lineHeight: 1.6, color: 'var(--muted-foreground)' }}>One snapshot so far. The line fills in as we re-check the listing.</p>}
-    <div style={{ marginTop: 8, display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--muted-foreground)', fontVariantNumeric: 'tabular-nums' }}>
-      <span>First seen {seenOn(first ? first.time : l.firstSeen)} · {usd(first ? first.price : l.price)}</span>
-      {history.length > 1 && <span>{seenOn(last.time)} · {usd(last.price)}</span>}
-    </div>
+      <div style={{ marginTop: 8, fontSize: 12, color: 'var(--muted-foreground)', fontVariantNumeric: 'tabular-nums' }}>First seen {seenOn(snaps[0].time)} · {usd(snaps[0].price)}</div>
+    </>}
   </div>;
 }
 
-export default function DetailScreen({ l, history }) {
-  const router = useRouter();
-  const [saved, toggleSave] = useSaved();
+export default function DetailScreen({ l, history, saved: initialSaved }) {
+  const [saved, toggleSave] = useSaved(initialSaved);
+  const isSaved = saved.includes(l.zpid);
   const pct = l.medianRent ? Math.round((l.price / l.medianRent - 1) * 100) : null;
   const from = l.isBuilding ? 'from ' : '';
   const KEY = [
@@ -55,13 +55,13 @@ export default function DetailScreen({ l, history }) {
     ['file-text', 'Source', null],
   ];
   const CHECKS = [
-    [pct != null && Math.abs(pct) <= 15, pct == null ? 'Too few nearby listings to compare the price' : `Price is ${Math.abs(pct)}% ${pct < 0 ? 'under' : 'over'} the ${l.neighborhood} median for ${bedsLabel(l.beds)}`],
+    [pct != null && pct <= 15, pct == null ? 'Too few nearby listings to compare the price' : `Price is ${Math.abs(pct)}% ${pct < 0 ? 'under' : 'over'} the ${l.neighborhood} median for ${bedsLabel(l.beds)}`],
     [true, `Seen on Zillow on ${seenOn(l.lastSeen)}`],
     [l.trust !== 'check', l.trust === 'check' ? 'Priced 40% or more under the median. Never pay before viewing.' : 'Not priced suspiciously low'],
   ];
   return <div style={{ width: 1440, margin: '0 auto', background: 'var(--background)', fontFamily: 'var(--font-sans)' }}>
     <section className="rm-on-dark" style={{ position: 'relative', height: 792, overflow: 'hidden', background: 'var(--ink)', color: '#fff' }}>
-      <LD.Slot src={l.images[0]} alt={`${bedsLabel(l.beds)} in ${l.neighborhood}`} />
+      <Photo src={l.images[0]} alt={`${bedsLabel(l.beds)} in ${l.neighborhood}`} eager />
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'linear-gradient(180deg,rgba(14,12,11,.75) 0%,rgba(14,12,11,.35) 30%,rgba(14,12,11,.7) 62%,rgba(14,12,11,.88) 100%)' }} />
       <LD.Header variant="transparent" brand={<LD.Wordmark onDark />} items={NAV} active="Listings" showSearch={false} style={{ position: 'absolute' }} />
       <nav aria-label="Breadcrumb" style={{ position: 'absolute', top: 104, left: 48, display: 'flex', gap: 10, fontSize: 13, color: 'rgba(255,255,255,.85)' }}>
@@ -100,7 +100,6 @@ export default function DetailScreen({ l, history }) {
                 </div>)}
               </div>
             </div>
-            <p style={{ margin: '14px 0 0 4px', fontSize: 13, color: 'var(--muted-foreground)' }}>Not our listing. We link back.</p>
           </div>
         </div>
       </section>
@@ -112,7 +111,6 @@ export default function DetailScreen({ l, history }) {
               <div style={{ background: 'var(--card)', borderRadius: 24, padding: 28 }}>
                 {l.trust && <LD.TrustBadge status={l.trust} />}
                 <div style={{ marginTop: l.trust ? 24 : 0 }}>{l.medianPerRoom ? <RangeBar l={l} /> : <p style={{ margin: 0, fontSize: 15, lineHeight: 1.6, color: 'var(--ink)' }}>Too few {bedsLabel(l.beds)} listings in {l.neighborhood} to compare this price yet.</p>}</div>
-                <div style={{ marginTop: 28, paddingTop: 24, borderTop: '1px solid var(--border)' }}><Sparkline history={history} l={l} /></div>
                 <div style={{ marginTop: 24, paddingTop: 8, borderTop: '1px solid var(--border)' }}>
                   {CHECKS.map(([ok, c], i) => <div key={c} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0', borderTop: i ? '1px solid var(--border)' : 0, fontSize: 14, color: 'var(--ink)' }}>
                     <span style={{ flex: 1 }}>{c}</span>
@@ -121,12 +119,7 @@ export default function DetailScreen({ l, history }) {
                   </div>)}
                 </div>
               </div>
-              <div style={{ background: 'var(--background)', border: '1px solid var(--border)', borderRadius: 24, padding: 28 }}>
-                <div style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>What a flagged listing looks like</div>
-                <LD.TrustBadge status="check" style={{ marginTop: 16 }} />
-                <div style={{ marginTop: 18, fontSize: 18, fontWeight: 500, lineHeight: 1.4, letterSpacing: '-0.01em', color: 'var(--ink)' }}>Priced 40% or more under the neighborhood median → see it in person before any deposit</div>
-                <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)', fontSize: 14, color: 'var(--ink)' }}>Medians come from every listing we’ve seen in the same neighborhood with the same bedroom count.</div>
-              </div>
+              <PriceHistory history={history} l={l} />
             </div>
           </div>
         </div>
@@ -135,9 +128,10 @@ export default function DetailScreen({ l, history }) {
         <div style={{ position: 'sticky', top: 104, pointerEvents: 'auto', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 24, padding: 28 }}>
           <div style={{ fontSize: 26, fontWeight: 500, letterSpacing: '-0.015em', color: 'var(--ink)', fontVariantNumeric: 'tabular-nums' }}>{from}{usd(l.perRoom)} per room</div>
           <div style={{ marginTop: 6, fontSize: 14, color: 'var(--muted-foreground)', fontVariantNumeric: 'tabular-nums' }}>{bedsLabel(l.beds)} · {l.neighborhood}{l.availabilityDate ? ` · Available ${day(l.availabilityDate)}` : ''}</div>
-          <LD.ButtonInk size="lg" fullWidth style={{ marginTop: 24 }} onClick={() => { if (!saved.includes(l.zpid)) toggleSave(l.zpid); router.push('/matches?listing=' + encodeURIComponent(l.zpid)); }}>Save and find roommates for this place</LD.ButtonInk>
-          <div style={{ marginTop: 16, display: 'flex', justifyContent: 'center' }}><LD.LinkUnderline href={l.link} arrow={false} size={14}>View on Zillow ↗</LD.LinkUnderline></div>
-          <p style={{ margin: '16px 0 0', fontSize: 13, lineHeight: 1.6, color: 'var(--muted-foreground)' }}>We don’t rent this unit. When you’re ready, you’ll apply through the source listing.</p>
+          <LD.ButtonInk size="lg" fullWidth href={'/matches?listing=' + encodeURIComponent(l.zpid)} style={{ marginTop: 24 }}>Find a roommate for this place</LD.ButtonInk>
+          <LD.ButtonOutline size="lg" arrow={false} icon={isSaved ? 'check' : 'plus'} onClick={() => toggleSave(l.zpid)} style={{ marginTop: 10, width: '100%', justifyContent: 'center' }}>{isSaved ? 'Saved' : 'Save'}</LD.ButtonOutline>
+          <div style={{ marginTop: 20, display: 'flex', justifyContent: 'center' }}><LD.LinkUnderline href={l.link} arrow={false} size={14}>View on Zillow ↗</LD.LinkUnderline></div>
+          <p style={{ margin: '16px 0 0', fontSize: 13, lineHeight: 1.6, color: 'var(--muted-foreground)', textAlign: 'center' }}>Not our listing. You apply on Zillow.</p>
         </div>
       </div>
     </div>

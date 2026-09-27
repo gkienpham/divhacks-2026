@@ -33,7 +33,7 @@ export interface ListingFilters {
   maxPerRoom?: number;
   fairOnly?: boolean;
   page?: number; // 1-based
-  pageSize?: number; // default 24
+  pageSize?: number; // default 24, max 10k (the whole table is ~1.4k rows)
 }
 
 // Every listing query starts here: latest median per (area, beds) from the
@@ -69,7 +69,7 @@ rows as (
 )`;
 
 export async function listListings(f: ListingFilters = {}): Promise<{ listings: Listing[]; total: number }> {
-  const pageSize = Math.min(Math.max(1, f.pageSize ?? 24), 100);
+  const pageSize = Math.min(Math.max(1, Math.trunc(f.pageSize ?? 24)), 10_000);
   const page = Math.max(1, f.page ?? 1);
   const rows = await query<Listing & { total: number }>(
     `${LISTING_CTE}
@@ -101,6 +101,22 @@ export async function listListings(f: ListingFilters = {}): Promise<{ listings: 
 export async function getListing(zpid: string): Promise<Listing | null> {
   const rows = await query<Listing>(`${LISTING_CTE} select * from rows where zpid = $1`, [zpid]);
   return rows[0] ?? null;
+}
+
+// In the order given; unknown and repeated zpids are skipped.
+export async function getListingsByIds(zpids: string[]): Promise<Listing[]> {
+  if (!zpids.length) return [];
+  const rows = await query<Listing>(`${LISTING_CTE} select * from rows where zpid = any($1::text[])`, [zpids]);
+  const byId = new Map(rows.map((l) => [l.zpid, l]));
+  return [...new Set(zpids)].flatMap((z) => byId.get(z) ?? []);
+}
+
+// [perRoom, beds] per listing, so the pre-screen counts "N fit your basics" live.
+export async function getPrescreenRooms(): Promise<[number, number][]> {
+  const rows = await query<{ p: number; b: number }>(
+    `select round(price::float8 / greatest(beds, 1))::int as p, beds::int as b from listings`,
+  );
+  return rows.map((r) => [r.p, r.b]);
 }
 
 export function getPriceHistory(zpid: string): Promise<{ time: string; price: number }[]> {

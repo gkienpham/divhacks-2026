@@ -1,12 +1,11 @@
-import { query } from "@/lib/db";
+import { getPrescreenRooms } from "@/lib/listings";
+import { getMe } from "@/lib/profiles";
 import StartScreen from "./StartScreen";
 
 export const dynamic = "force-dynamic";
 
 export default async function StartPage() {
-  // [perRoom, beds] per listing (same perRoom as lib/listings), so the pre-screen counts "N fit your basics" live.
-  const rows = await query<{ p: number; b: number }>(
-    `select round(price::float8 / greatest(beds, 1))::int as p, beds::int as b from listings`,
-  );
-  return <StartScreen rooms={rows.map((r) => [r.p, r.b])} />;
+  const [rooms, me] = await Promise.all([getPrescreenRooms(), getMe()]);
+  // Prefill only once this form has saved; before that the name is lib/session.ts's anonymous placeholder.
+  return <StartScreen rooms={rooms} me={me?.prescreen ? { name: me.name, prescreen: me.prescreen } : null} />;
 }

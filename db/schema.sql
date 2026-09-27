@@ -93,3 +93,17 @@ create table if not exists matches (
   unique (profile_a, profile_b)
 );
 
+
+-- Web app state (web/lib/session.ts, profiles.ts, matches.ts). Additive, so re-running is safe.
+-- Anonymous identity until OAuth: the rm_uid cookie holds session_token, never the numeric id.
+alter table profiles add column if not exists session_token uuid unique;
+alter table profiles add column if not exists email text;
+alter table profiles add column if not exists prescreen jsonb not null default '{}'; -- web/lib/questions.ts Prescreen
+alter table profiles add column if not exists see_pref text check (see_pref in ('overlap', 'opposite', 'auto'));
+alter table profiles add column if not exists updated_at timestamptz not null default now();
+-- Per-side choices; mutual = both ids in liked_by.
+alter table matches add column if not exists liked_by bigint[] not null default '{}';
+alter table matches add column if not exists passed_by bigint[] not null default '{}';
+alter table matches add column if not exists meetup jsonb;
+alter table matches add column if not exists agreement jsonb;
+alter table matches add column if not exists updated_at timestamptz not null default now();
