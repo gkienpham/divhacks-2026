@@ -1,11 +1,12 @@
 // End-to-end check of the data layer against the real DB. Run from web/:
-//   npx tsx --env-file=.env.local --conditions=react-server lib/matches.check.ts
+//   AI_OFF=1 npx tsx --env-file=.env.local --conditions=react-server lib/matches.check.ts
 // Creates a throwaway profile and a throwaway synthetic partner, walks the whole funnel, then deletes both.
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
+import { undash, type ChatLine } from './ai';
 import { getPool, query } from './db';
 import { listListings } from './listings';
-import { actOnMatch, getMatch, getTopMatches, LIKE_BACK, MatchError } from './matches';
+import { actOnMatch, chatTurn, getMatch, getTopMatches, LIKE_BACK, MatchError } from './matches';
 import { deleteProfile, getMe, saveProfile, setSaved } from './profiles';
 import { PRESCREEN, QUICK, type Prescreen, type QuickAnswers } from './questions';
 
@@ -16,6 +17,9 @@ const create = (name: string, synthetic = false) =>
   query<{ id: number }>(`insert into profiles (name, session_token, is_synthetic) values ($1, $2, $3) returning id::int as id`, [name, randomUUID(), synthetic]).then((r) => r[0].id);
 
 async function main() {
+  // Gemini output never keeps an em or en dash (lib/ai.ts undash): ranges get a hyphen, the rest a comma.
+  assert.deepEqual(undash(['Hey Alex—the LIC place is great — 10–11 PM works -- ok', 'A – B', 3]),
+    ['Hey Alex, the LIC place is great, 10-11 PM works, ok', 'A, B', 3]);
   const meId = await create('Check Me');
   const themId = await create('Check Partner', true);
   try {
@@ -66,9 +70,21 @@ async function main() {
 
     // Funnel.
     await assert.rejects(actOnMatch(meId, mine.id, 'meetup', { format: 'Coffee', time: 'Sat 10 AM' }), (e: MatchError) => e.status === 409);
+    await assert.rejects(chatTurn(meId, mine.id, 'them', []), (e: MatchError) => e.status === 409);
     let m = (await actOnMatch(meId, mine.id, 'like'))!;
     assert.ok(m.likedByMe && m.mutual && m.status === 'mutual' && m.agreement && m.agreement.confirmed.length === 0);
     console.log('draft agreement', m.agreement.sections.map((s) => s.title), m.agreement.open);
+
+    // 6A chat (stateless), AI off: the sample partner can't reply, and RoomMe asks the rule questions in order
+    // (contradictions, then the agreement's open ones), skipping what it already asked, until none are left.
+    await assert.rejects(chatTurn(meId, mine.id, 'them', []), (e: MatchError) => e.status === 502);
+    let chat: ChatLine[] = [{ by: 'me', text: 'Hi!' }];
+    for (const want of [...me.signals.contradictions.map((c) => c.question), ...m.agreement.open.map((o) => o.q)]) {
+      assert.deepEqual(await chatTurn(meId, mine.id, 'roomme', chat), { text: want, ai: false });
+      chat = [...chat, { by: 'roomme', text: want }];
+    }
+    await assert.rejects(chatTurn(meId, mine.id, 'roomme', chat), (e: MatchError) => e.status === 409);
+    assert.equal(await chatTurn(themId + 1_000_000, mine.id, 'roomme', []), null);
     m = (await actOnMatch(meId, mine.id, 'meetup', { format: 'Coffee', time: 'Sat 10 AM' }))!;
     assert.ok(m.status === 'met' && m.meetup?.format === 'Coffee');
     await assert.rejects(actOnMatch(meId, mine.id, 'lock'), (e: MatchError) => e.status === 409);
